@@ -76,10 +76,12 @@ The gridX API uses Auth0 with a Resource Owner Password grant (not standard OAut
 
 ### Token Handling
 
-- Tokens stored with `expires_at`, auto-refreshed 60s before expiry
-- If refresh fails, re-authenticate with stored credentials
+- The `offline_access` scope requests a refresh token from Auth0
+- Tokens stored with `expires_at` and `refresh_token`
+- 60s before expiry: attempt Auth0 `refresh_token` grant
+- If refresh token grant fails: re-authenticate with stored email/password (full password-realm grant)
+- If re-auth also fails: raise `GridxAuthenticationError` → triggers HA reauth flow
 - Auth cooldown: no more than one auth attempt per 60s (protect Auth0 from spam)
-- Auth failure → `GridxAuthenticationError` → triggers HA reauth flow
 
 ## API Client (`api.py`)
 
@@ -154,11 +156,11 @@ class GridxSystemData:
     photovoltaic: float         # W
     consumption: float          # W
     total_consumption: float    # W
-    grid: float                 # W
+    grid: float                 # W (positive = importing from grid, negative = exporting)
     self_consumption: float     # W
     self_supply: float          # W
-    self_consumption_rate: float
-    self_sufficiency_rate: float
+    self_consumption_rate: float    # 0.0-1.0 from API, displayed as % (×100)
+    self_sufficiency_rate: float    # 0.0-1.0 from API, displayed as % (×100)
     direct_consumption_household: float
     direct_consumption_heat_pump: float
     direct_consumption_ev: float
@@ -167,7 +169,7 @@ class GridxSystemData:
     heat_pump: float            # W aggregate
     grid_meter_reading_negative: float  # Wh cumulative (export)
     grid_meter_reading_positive: float  # Wh cumulative (import)
-    measured_at: str
+    measured_at: datetime       # ISO 8601 timestamp from API, parsed
     batteries: list[GridxBattery]
     heat_pumps: list[GridxHeatPump]
     ev_charging_stations: list[GridxEVChargingStation]
@@ -209,7 +211,7 @@ Data keyed by system ID. Supports multiple systems from one account.
 |----------|--------|
 | Normal poll | Every 60s, returns typed data |
 | Connection error / 5xx | Raise `UpdateFailed`, entities go unavailable |
-| Backoff | 120s → 240s → 480s → cap at 900s (15 min), resets on success |
+| Backoff | Dynamically set `update_interval`: 120s → 240s → 480s → cap at 900s. Reset to 60s on success. Track consecutive failure count in coordinator. |
 | Auth error (401/403) | Call `config_entry.async_start_reauth()`, stop polling |
 | First setup failure | Raise `ConfigEntryNotReady` (HA retries automatically) |
 
@@ -248,13 +250,13 @@ Data keyed by system ID. Supports multiple systems from one account.
 | Grid | W | power | measurement | — |
 | Self Consumption | W | power | measurement | — |
 | Self Supply | W | power | measurement | — |
-| Self Consumption Rate | % | power_factor | measurement | — |
-| Self Sufficiency Rate | % | power_factor | measurement | — |
+| Self Consumption Rate | % | — | measurement | — |
+| Self Sufficiency Rate | % | — | measurement | — |
 | Direct Consumption Household | W | power | measurement | — |
 | Direct Consumption Heat Pump | W | power | measurement | — |
 | Direct Consumption EV | W | power | measurement | — |
 | Direct Consumption Heater | W | power | measurement | — |
-| Direct Consumption Rate | % | power_factor | measurement | hidden default |
+| Direct Consumption Rate | % | — | measurement | hidden default |
 | Heat Pump (aggregate) | W | power | measurement | — |
 | Grid Meter Export | Wh | energy | total_increasing | — |
 | Grid Meter Import | Wh | energy | total_increasing | — |
@@ -278,6 +280,8 @@ Data keyed by system ID. Supports multiple systems from one account.
 | Power | W | power | measurement | — |
 | SG Ready State | — | enum | — | — |
 
+SG Ready State options: `["AUTO", "BOOST", "OFF", "BLOCK"]` (standard SG Ready states from the gridX API). Unknown values passed through as-is.
+
 ### EV Charger Entities (per charger device)
 
 | Entity | Unit | Device class | State class | Category |
@@ -296,17 +300,55 @@ Data keyed by system ID. Supports multiple systems from one account.
 | Power | W | power | measurement | — |
 | Temperature | °C | temperature | measurement | — |
 
-### Entity Description
+### Entity Description Architecture
 
-Custom subclass of `SensorEntityDescription`:
+**System entities** use a description with a value extractor from `GridxSystemData`:
 
 ```python
 @dataclass(frozen=True)
-class GridxSensorEntityDescription(SensorEntityDescription):
-    value_fn: Callable[[GridxSystemData], StateType] | None = None
+class GridxSystemSensorDescription(SensorEntityDescription):
+    value_fn: Callable[[GridxSystemData], StateType]
 ```
 
-Appliance entities use parallel description classes with typed callables for their respective data models.
+**Appliance entities** use a generic description parameterized by appliance type:
+
+```python
+@dataclass(frozen=True)
+class GridxApplianceSensorDescription(SensorEntityDescription):
+    value_fn: Callable[[Any], StateType]  # receives GridxBattery, GridxHeatPump, etc.
+```
+
+**How appliance entities find their data:**
+
+Each appliance entity stores its `appliance_id` and `system_id`. On coordinator update:
+1. Entity reads `coordinator.data[system_id]` → `GridxSystemData`
+2. Looks up its appliance in the corresponding list (e.g., `data.batteries`)
+3. Matches by `appliance_id`
+4. Calls `description.value_fn(appliance)` to extract the value
+
+**Platform setup (`async_setup_entry`):**
+1. Read initial coordinator data
+2. For each system: create system entities from `SYSTEM_SENSOR_DESCRIPTIONS`
+3. For each appliance array (batteries, heat_pumps, etc.):
+   - Skip if array is empty
+   - For each appliance: create entities from the corresponding description list
+   - First appliance: no suffix in device name. Second+: `_2`, `_3`
+4. Register a coordinator listener to detect newly appearing appliances on future updates
+
+**Multi-system disambiguation:**
+Each entity's unique ID includes the system ID: `{system_id}_{entity_key}` for system entities, `{appliance_id}_{entity_key}` for appliance entities. Device names include the system name if multiple systems exist.
+
+### Display Precision
+
+| Sensor type | Precision |
+|------------|-----------|
+| Power (W) | 0 decimals |
+| Energy (Wh, kWh) | 0 decimals |
+| Percentage (%) | 1 decimal |
+| Temperature (°C) | 1 decimal |
+| Current (A) | 1 decimal |
+
+Set via `suggested_display_precision` on entity descriptions.
 
 ## HACS Compatibility
 
@@ -325,6 +367,7 @@ Appliance entities use parallel description classes with typed callables for the
   "name": "gridX Energy Management",
   "version": "1.0.0",
   "integration_type": "hub",
+  "config_flow": true,
   "iot_class": "cloud_polling",
   "codeowners": ["@lackas"],
   "requirements": [],
@@ -349,6 +392,10 @@ All API calls mocked via `aiohttp` fixtures. No real network calls.
 | `test_coordinator.py` | Normal update, `UpdateFailed` on connection error, reauth trigger, backoff |
 | `test_sensor.py` | Correct values, device assignment, dynamic naming (1 vs 2+), diagnostic entities, no entities for empty arrays |
 | `test_diagnostics.py` | Diagnostics dump with redacted credentials |
+
+### Diagnostics Redaction
+
+Fields redacted in diagnostics output: `email`, `password`, `access_token`, `refresh_token`, `id_token`, `appliance_id` (partial). System IDs shown in full (needed for debugging).
 
 ### Test Fixtures
 
