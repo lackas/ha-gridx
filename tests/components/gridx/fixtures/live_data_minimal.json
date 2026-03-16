@@ -1,0 +1,20 @@
+{
+  "consumption": 500.0,
+  "directConsumptionEV": 0,
+  "directConsumptionHeatPump": 0,
+  "directConsumptionHeater": 0,
+  "directConsumptionHousehold": 200.0,
+  "directConsumptionRate": 0.4,
+  "grid": 300.0,
+  "gridMeterReadingNegative": 100000,
+  "gridMeterReadingPositive": 500000,
+  "heatPump": 0,
+  "measuredAt": "2026-03-16T12:00:00Z",
+  "photovoltaic": 200.0,
+  "production": 200.0,
+  "selfConsumption": 200.0,
+  "selfConsumptionRate": 1.0,
+  "selfSufficiencyRate": 0.4,
+  "selfSupply": 200.0,
+  "totalConsumption": 500.0
+}

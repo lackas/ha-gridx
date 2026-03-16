@@ -1,0 +1,29 @@
+{
+  "batteries": [
+    {"applianceID": "battery-001", "capacity": 15000, "charge": 100, "discharge": 0, "nominalCapacity": 15000, "power": -100, "remainingCharge": 10000, "stateOfCharge": 0.67},
+    {"applianceID": "battery-002", "capacity": 5000, "charge": 0, "discharge": 500, "nominalCapacity": 5000, "power": 500, "remainingCharge": 2000, "stateOfCharge": 0.4}
+  ],
+  "battery": {"capacity": 20000, "charge": 100, "discharge": 500, "nominalCapacity": 20000, "power": 400, "remainingCharge": 12000, "stateOfCharge": 0.6},
+  "consumption": 2000.0,
+  "directConsumptionEV": 0,
+  "directConsumptionHeatPump": 800.0,
+  "directConsumptionHeater": 0,
+  "directConsumptionHousehold": 700.0,
+  "directConsumptionRate": 0.75,
+  "grid": 500.0,
+  "gridMeterReadingNegative": 200000,
+  "gridMeterReadingPositive": 800000,
+  "heatPump": 800.0,
+  "heatPumps": [
+    {"applianceID": "heatpump-001", "power": 600.0, "sgReadyState": "AUTO"},
+    {"applianceID": "heatpump-002", "power": 200.0, "sgReadyState": "BOOST"}
+  ],
+  "measuredAt": "2026-03-16T14:00:00Z",
+  "photovoltaic": 1500.0,
+  "production": 1500.0,
+  "selfConsumption": 1500.0,
+  "selfConsumptionRate": 1.0,
+  "selfSufficiencyRate": 0.75,
+  "selfSupply": 1500.0,
+  "totalConsumption": 2000.0
+}
