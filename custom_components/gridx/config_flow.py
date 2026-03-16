@@ -25,21 +25,24 @@ class GridxConfigFlow(ConfigFlow, domain=DOMAIN):
             try:
                 await api.authenticate()
                 system_ids = await api.async_get_gateways()
+                if not system_ids:
+                    errors["base"] = "cannot_connect"
             except GridxAuthenticationError:
                 errors["base"] = "invalid_auth"
             except GridxConnectionError:
                 errors["base"] = "cannot_connect"
             else:
-                await self.async_set_unique_id(system_ids[0])
-                self._abort_if_unique_id_configured()
-                return self.async_create_entry(
-                    title="gridX Energy Management",
-                    data={
-                        "email": user_input["email"],
-                        "password": user_input["password"],
-                        "system_ids": system_ids,
-                    },
-                )
+                if not errors:
+                    await self.async_set_unique_id(system_ids[0])
+                    self._abort_if_unique_id_configured()
+                    return self.async_create_entry(
+                        title="gridX Energy Management",
+                        data={
+                            "email": user_input["email"],
+                            "password": user_input["password"],
+                            "system_ids": system_ids,
+                        },
+                    )
 
         return self.async_show_form(
             step_id="user",

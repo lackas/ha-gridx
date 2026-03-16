@@ -82,7 +82,6 @@ async def test_coordinator_update_success():
     assert "system-id-001" in result
     assert result["system-id-001"].consumption == 1500.0
     assert result["system-id-001"].photovoltaic == 3000.0
-    api._ensure_token.assert_awaited_once()
     api.async_get_live_data.assert_awaited_once_with("system-id-001")
 
     # Interval should be reset to default
@@ -129,7 +128,7 @@ async def test_coordinator_auth_error():
     from homeassistant.helpers.update_coordinator import UpdateFailed
 
     api = make_api()
-    api._ensure_token = AsyncMock(side_effect=GridxAuthenticationError("bad token"))
+    api.async_get_live_data = AsyncMock(side_effect=GridxAuthenticationError("bad token"))
     hass = make_hass()
     entry = make_config_entry()
 

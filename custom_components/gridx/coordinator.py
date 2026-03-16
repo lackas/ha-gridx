@@ -8,7 +8,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import GridxApi, GridxAuthenticationError, GridxConnectionError, GridxApiError
-from .const import DEFAULT_SCAN_INTERVAL, ERROR_SCAN_INTERVAL_BASE, ERROR_SCAN_INTERVAL_MAX
+from .const import (
+    DEFAULT_SCAN_INTERVAL,
+    ERROR_SCAN_INTERVAL_BASE,
+    ERROR_SCAN_INTERVAL_MAX,
+)
 from .models import GridxSystemData
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,7 +36,6 @@ class GridxCoordinator(DataUpdateCoordinator[dict[str, GridxSystemData]]):
 
     async def _async_update_data(self) -> dict[str, GridxSystemData]:
         try:
-            await self.api._ensure_token()
             system_ids = self.config_entry.data["system_ids"]
             result = {}
             for system_id in system_ids:

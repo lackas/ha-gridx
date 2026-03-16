@@ -25,5 +25,39 @@
       "already_configured": "This account is already configured",
       "reauth_successful": "Re-authentication successful"
     }
+  },
+  "entity": {
+    "sensor": {
+      "capacity": { "name": "Capacity" },
+      "charge": { "name": "Charge" },
+      "consumption": { "name": "Consumption" },
+      "current_l1": { "name": "Current L1" },
+      "current_l2": { "name": "Current L2" },
+      "current_l3": { "name": "Current L3" },
+      "direct_consumption_ev": { "name": "Direct consumption EV" },
+      "direct_consumption_heat_pump": { "name": "Direct consumption heat pump" },
+      "direct_consumption_heater": { "name": "Direct consumption heater" },
+      "direct_consumption_household": { "name": "Direct consumption household" },
+      "direct_consumption_rate": { "name": "Direct consumption rate" },
+      "discharge": { "name": "Discharge" },
+      "grid": { "name": "Grid" },
+      "grid_meter_reading_negative": { "name": "Grid meter export" },
+      "grid_meter_reading_positive": { "name": "Grid meter import" },
+      "heat_pump": { "name": "Heat pump" },
+      "nominal_capacity": { "name": "Nominal capacity" },
+      "photovoltaic": { "name": "Photovoltaic" },
+      "power": { "name": "Power" },
+      "production": { "name": "Production" },
+      "reading_total": { "name": "Reading total" },
+      "remaining_charge": { "name": "Remaining charge" },
+      "self_consumption": { "name": "Self consumption" },
+      "self_consumption_rate": { "name": "Self consumption rate" },
+      "self_sufficiency_rate": { "name": "Self sufficiency rate" },
+      "self_supply": { "name": "Self supply" },
+      "sg_ready_state": { "name": "SG ready state" },
+      "state_of_charge": { "name": "State of charge" },
+      "temperature": { "name": "Temperature" },
+      "total_consumption": { "name": "Total consumption" }
+    }
   }
 }
