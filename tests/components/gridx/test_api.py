@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import time
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import aiohttp
 import pytest
@@ -22,7 +20,6 @@ from custom_components.gridx.const import (
     API_GATEWAYS_URL,
     API_LIVE_URL,
     AUTH0_TOKEN_URL,
-    AUTH_COOLDOWN_SECONDS,
 )
 from custom_components.gridx.models import GridxSystemData
 

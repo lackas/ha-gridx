@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 
@@ -36,6 +36,11 @@ class GridxEVChargingStation:
 
     appliance_id: str = ""
     power: float = 0.0
+    state_of_charge: float = 0.0
+    current_l1: float = 0.0
+    current_l2: float = 0.0
+    current_l3: float = 0.0
+    reading_total: float = 0.0
 
 
 @dataclass
@@ -44,6 +49,7 @@ class GridxHeater:
 
     appliance_id: str = ""
     power: float = 0.0
+    temperature: float = 0.0
 
 
 @dataclass
@@ -124,6 +130,11 @@ def _parse_ev_charging_station(raw: dict[str, Any]) -> GridxEVChargingStation:
     return GridxEVChargingStation(
         appliance_id=raw.get("applianceID", ""),
         power=float(raw.get("power", 0.0)),
+        state_of_charge=float(raw.get("stateOfCharge", 0.0)),
+        current_l1=float(raw.get("currentL1", 0.0)),
+        current_l2=float(raw.get("currentL2", 0.0)),
+        current_l3=float(raw.get("currentL3", 0.0)),
+        reading_total=float(raw.get("readingTotal", 0.0)),
     )
 
 
@@ -131,6 +142,7 @@ def _parse_heater(raw: dict[str, Any]) -> GridxHeater:
     return GridxHeater(
         appliance_id=raw.get("applianceID", ""),
         power=float(raw.get("power", 0.0)),
+        temperature=float(raw.get("temperature", 0.0)),
     )
 
 

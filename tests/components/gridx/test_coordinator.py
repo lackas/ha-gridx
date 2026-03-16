@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -14,7 +14,6 @@ from custom_components.gridx.api import (
 )
 from custom_components.gridx.const import (
     DEFAULT_SCAN_INTERVAL,
-    ERROR_SCAN_INTERVAL_BASE,
     ERROR_SCAN_INTERVAL_MAX,
 )
 from custom_components.gridx.models import GridxSystemData
@@ -98,9 +97,7 @@ async def test_coordinator_connection_error():
     from homeassistant.helpers.update_coordinator import UpdateFailed
 
     api = make_api()
-    api.async_get_live_data = AsyncMock(
-        side_effect=GridxConnectionError("timeout")
-    )
+    api.async_get_live_data = AsyncMock(side_effect=GridxConnectionError("timeout"))
     hass = make_hass()
     entry = make_config_entry()
 
@@ -116,9 +113,7 @@ async def test_coordinator_api_error():
     from homeassistant.helpers.update_coordinator import UpdateFailed
 
     api = make_api()
-    api.async_get_live_data = AsyncMock(
-        side_effect=GridxApiError("server error")
-    )
+    api.async_get_live_data = AsyncMock(side_effect=GridxApiError("server error"))
     hass = make_hass()
     entry = make_config_entry()
 
@@ -134,9 +129,7 @@ async def test_coordinator_auth_error():
     from homeassistant.helpers.update_coordinator import UpdateFailed
 
     api = make_api()
-    api._ensure_token = AsyncMock(
-        side_effect=GridxAuthenticationError("bad token")
-    )
+    api._ensure_token = AsyncMock(side_effect=GridxAuthenticationError("bad token"))
     hass = make_hass()
     entry = make_config_entry()
 
@@ -154,9 +147,7 @@ async def test_coordinator_backoff_increases():
     from homeassistant.helpers.update_coordinator import UpdateFailed
 
     api = make_api()
-    api.async_get_live_data = AsyncMock(
-        side_effect=GridxConnectionError("timeout")
-    )
+    api.async_get_live_data = AsyncMock(side_effect=GridxConnectionError("timeout"))
     hass = make_hass()
     entry = make_config_entry()
 
@@ -183,9 +174,7 @@ async def test_coordinator_backoff_capped():
     from homeassistant.helpers.update_coordinator import UpdateFailed
 
     api = make_api()
-    api.async_get_live_data = AsyncMock(
-        side_effect=GridxConnectionError("timeout")
-    )
+    api.async_get_live_data = AsyncMock(side_effect=GridxConnectionError("timeout"))
     hass = make_hass()
     entry = make_config_entry()
 
