@@ -1,0 +1,9 @@
+{
+  "entity": {
+    "sensor": {
+      "sg_ready_state": {
+        "default": "mdi:heat-pump"
+      }
+    }
+  }
+}
