@@ -49,6 +49,25 @@ Note: Use `~/src/venv/ha/bin/python -m pytest` (not bare `pytest`) to ensure the
 ~/src/venv/ha/bin/ruff check custom_components/gridx/ tests/
 ```
 
+## Releasing
+
+1. Bump `version` in `custom_components/gridx/manifest.json`
+2. Commit and push
+3. Tag and push: `git tag v1.x.x && git push origin v1.x.x`
+4. Create GitHub release: `gh release create v1.x.x --title "v1.x.x" --notes "..."`
+
+HACS picks up new releases automatically — no PR needed (the hacs/default registration was a one-time step).
+
+### CI Checks (must pass before releasing)
+
+- **CI** (`ci.yml`) — ruff lint + pytest
+- **HACS Validation** (`hacs.yml`) — validates HACS structure
+- **Hassfest** (`hassfest.yml`) — validates HA manifest (keys must be sorted: domain, name, then alphabetical)
+
+### Manifest Key Order
+
+hassfest requires: `domain` first, `name` second, then all other keys alphabetically sorted.
+
 ## Key Design Decisions
 
 - **No historical data** — HA handles its own statistics from live sensor data
