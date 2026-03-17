@@ -148,13 +148,19 @@ class TestBatterySensorValueExtraction:
         desc_map = {d.key: d for d in BATTERY_SENSOR_DESCRIPTIONS}
 
         # state_of_charge is multiplied by 100
-        assert desc_map["battery_state_of_charge"].value_fn(battery) == pytest.approx(75.0)
+        assert desc_map["battery_state_of_charge"].value_fn(battery) == pytest.approx(
+            75.0
+        )
         assert desc_map["battery_power"].value_fn(battery) == pytest.approx(1000.0)
         assert desc_map["battery_charge"].value_fn(battery) == pytest.approx(200.0)
         assert desc_map["battery_discharge"].value_fn(battery) == pytest.approx(0.0)
-        assert desc_map["battery_remaining_charge"].value_fn(battery) == pytest.approx(11000.0)
+        assert desc_map["battery_remaining_charge"].value_fn(battery) == pytest.approx(
+            11000.0
+        )
         assert desc_map["battery_capacity"].value_fn(battery) == pytest.approx(15000.0)
-        assert desc_map["battery_nominal_capacity"].value_fn(battery) == pytest.approx(15000.0)
+        assert desc_map["battery_nominal_capacity"].value_fn(battery) == pytest.approx(
+            15000.0
+        )
 
     def test_battery_descriptions_count(self):
         """There are exactly 7 battery sensor descriptions."""
@@ -207,11 +213,15 @@ class TestEVChargerSensorValueExtraction:
 
         assert desc_map["ev_charger_power"].value_fn(ev) == pytest.approx(7000.0)
         # state_of_charge is multiplied by 100
-        assert desc_map["ev_charger_state_of_charge"].value_fn(ev) == pytest.approx(45.0)
+        assert desc_map["ev_charger_state_of_charge"].value_fn(ev) == pytest.approx(
+            45.0
+        )
         assert desc_map["ev_charger_current_l1"].value_fn(ev) == pytest.approx(10.5)
         assert desc_map["ev_charger_current_l2"].value_fn(ev) == pytest.approx(10.3)
         assert desc_map["ev_charger_current_l3"].value_fn(ev) == pytest.approx(10.4)
-        assert desc_map["ev_charger_reading_total"].value_fn(ev) == pytest.approx(123.456)
+        assert desc_map["ev_charger_reading_total"].value_fn(ev) == pytest.approx(
+            123.456
+        )
 
     def test_ev_charger_descriptions_count(self):
         """There are exactly 6 EV charger sensor descriptions."""
@@ -281,7 +291,10 @@ class TestDiagnosticEntities:
         desc_map = {d.key: d for d in BATTERY_SENSOR_DESCRIPTIONS}
 
         assert desc_map["battery_capacity"].entity_category == EntityCategory.DIAGNOSTIC
-        assert desc_map["battery_nominal_capacity"].entity_category == EntityCategory.DIAGNOSTIC
+        assert (
+            desc_map["battery_nominal_capacity"].entity_category
+            == EntityCategory.DIAGNOSTIC
+        )
 
     def test_non_diagnostic_battery_sensors(self):
         """power, charge, discharge etc. must NOT have DIAGNOSTIC category."""
