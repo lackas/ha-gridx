@@ -153,7 +153,7 @@ class GridxApi:
                 self._last_auth_attempt = 0
                 await self.authenticate()
 
-    async def _get(self, url: str) -> Any:
+    async def _get(self, url: str, *, _retried: bool = False) -> Any:
         """Perform an authenticated GET request."""
         await self._ensure_token()
 
@@ -162,6 +162,9 @@ class GridxApi:
         try:
             async with self._session.get(url, headers=headers) as resp:
                 if resp.status in (401, 403):
+                    if not _retried:
+                        self._token = None
+                        return await self._get(url, _retried=True)
                     raise GridxAuthenticationError(
                         f"API request unauthorized: HTTP {resp.status}"
                     )
@@ -173,6 +176,9 @@ class GridxApi:
             raise
         except aiohttp.ClientResponseError as err:
             if err.status in (401, 403):
+                if not _retried:
+                    self._token = None
+                    return await self._get(url, _retried=True)
                 raise GridxAuthenticationError(
                     f"API request unauthorized: HTTP {err.status}"
                 ) from err

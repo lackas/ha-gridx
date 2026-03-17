@@ -184,6 +184,53 @@ class TestTokenRefresh:
             assert isinstance(result, GridxSystemData)
 
 
+class TestTokenRetryOn401:
+    @pytest.mark.asyncio
+    async def test_401_triggers_reauth_and_retry(self):
+        """A 401 on an API call should re-authenticate and retry once."""
+        live_data = load_fixture("live_data.json")
+        system_id = "system-id-001"
+        url = API_LIVE_URL.format(system_id)
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                # Initial auth
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                # First API call returns 401 (token expired server-side)
+                m.get(url, status=401)
+                # Re-auth after clearing token
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                # Retry succeeds
+                m.get(url, payload=live_data)
+
+                result = await api.async_get_live_data(system_id)
+
+            assert isinstance(result, GridxSystemData)
+
+    @pytest.mark.asyncio
+    async def test_401_after_retry_raises(self):
+        """A 401 on retry should raise GridxAuthenticationError."""
+        system_id = "system-id-001"
+        url = API_LIVE_URL.format(system_id)
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                # Initial auth
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                # First API call returns 401
+                m.get(url, status=401)
+                # Re-auth succeeds but API still returns 401
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.get(url, status=401)
+
+                with pytest.raises(GridxAuthenticationError):
+                    await api.async_get_live_data(system_id)
+
+
 class TestAuthCooldown:
     @pytest.mark.asyncio
     async def test_auth_cooldown(self):
