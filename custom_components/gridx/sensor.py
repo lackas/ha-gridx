@@ -495,15 +495,15 @@ class GridxApplianceSensor(CoordinatorEntity[GridxCoordinator], SensorEntity):
 # ---------------------------------------------------------------------------
 
 _APPLIANCE_CONFIG: list[tuple[str, str, tuple, str]] = [
-    ("batteries", "Battery", BATTERY_SENSOR_DESCRIPTIONS, "batteries"),
-    ("heat_pumps", "Heat Pump", HEAT_PUMP_SENSOR_DESCRIPTIONS, "heat_pumps"),
+    ("batteries", "gridX Battery", BATTERY_SENSOR_DESCRIPTIONS, "batteries"),
+    ("heat_pumps", "gridX Heat Pump", HEAT_PUMP_SENSOR_DESCRIPTIONS, "heat_pumps"),
     (
         "ev_charging_stations",
-        "EV Charger",
+        "gridX EV Charger",
         EV_CHARGER_SENSOR_DESCRIPTIONS,
         "ev_charging_stations",
     ),
-    ("heaters", "Heater", HEATER_SENSOR_DESCRIPTIONS, "heaters"),
+    ("heaters", "gridX Heater", HEATER_SENSOR_DESCRIPTIONS, "heaters"),
 ]
 
 
