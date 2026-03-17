@@ -128,7 +128,9 @@ async def test_coordinator_auth_error():
     from homeassistant.helpers.update_coordinator import UpdateFailed
 
     api = make_api()
-    api.async_get_live_data = AsyncMock(side_effect=GridxAuthenticationError("bad token"))
+    api.async_get_live_data = AsyncMock(
+        side_effect=GridxAuthenticationError("bad token")
+    )
     hass = make_hass()
     entry = make_config_entry()
 

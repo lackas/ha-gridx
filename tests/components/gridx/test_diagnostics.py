@@ -27,9 +27,7 @@ def mock_system_data():
         photovoltaic=3500.0,
         batteries=[GridxBattery(appliance_id="bat1", state_of_charge=0.8)],
         heat_pumps=[GridxHeatPump(appliance_id="hp1", power=800.0)],
-        ev_charging_stations=[
-            GridxEVChargingStation(appliance_id="ev1", power=7400.0)
-        ],
+        ev_charging_stations=[GridxEVChargingStation(appliance_id="ev1", power=7400.0)],
         heaters=[GridxHeater(appliance_id="heater1", power=500.0)],
     )
 

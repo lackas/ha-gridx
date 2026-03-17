@@ -191,9 +191,13 @@ def parse_live_data(data: dict[str, Any]) -> GridxSystemData:
         consumption=_parse_float(data.get("consumption")),
         direct_consumption=_parse_float(data.get("directConsumption")),
         direct_consumption_ev=_parse_float(data.get("directConsumptionEV")),
-        direct_consumption_heat_pump=_parse_float(data.get("directConsumptionHeatPump")),
+        direct_consumption_heat_pump=_parse_float(
+            data.get("directConsumptionHeatPump")
+        ),
         direct_consumption_heater=_parse_float(data.get("directConsumptionHeater")),
-        direct_consumption_household=_parse_float(data.get("directConsumptionHousehold")),
+        direct_consumption_household=_parse_float(
+            data.get("directConsumptionHousehold")
+        ),
         direct_consumption_rate=_parse_float(data.get("directConsumptionRate")),
         grid=_parse_float(data.get("grid")),
         heat_pump=_parse_float(data.get("heatPump")),
@@ -213,8 +217,12 @@ def parse_live_data(data: dict[str, Any]) -> GridxSystemData:
         battery_power=_parse_float(bat.get("power")),
         battery_remaining_charge=_parse_float(bat.get("remainingCharge")),
         battery_state_of_charge=_parse_float(bat.get("stateOfCharge")),
-        batteries=[_parse_battery(b) for b in _parse_object_list(data.get("batteries"))],
-        heat_pumps=[_parse_heat_pump(hp) for hp in _parse_object_list(data.get("heatPumps"))],
+        batteries=[
+            _parse_battery(b) for b in _parse_object_list(data.get("batteries"))
+        ],
+        heat_pumps=[
+            _parse_heat_pump(hp) for hp in _parse_object_list(data.get("heatPumps"))
+        ],
         ev_charging_stations=[
             _parse_ev_charging_station(ev)
             for ev in _parse_object_list(data.get("evChargingStations"))
