@@ -185,10 +185,16 @@ class GridxApi:
     async def async_get_gateways(self) -> list[str]:
         """Return list of system IDs from the gateways endpoint."""
         data = await self._get(API_GATEWAYS_URL)
-        return [entry["system"]["id"] for entry in data]
+        try:
+            return [str(entry["system"]["id"]) for entry in data]
+        except (KeyError, TypeError, ValueError) as err:
+            raise GridxApiError("Unexpected gateways payload") from err
 
     async def async_get_live_data(self, system_id: str) -> GridxSystemData:
         """Return parsed live data for the given system ID."""
         url = API_LIVE_URL.format(system_id)
         data = await self._get(url)
-        return parse_live_data(data)
+        try:
+            return parse_live_data(data)
+        except (AttributeError, TypeError, ValueError) as err:
+            raise GridxApiError("Unexpected live data payload") from err

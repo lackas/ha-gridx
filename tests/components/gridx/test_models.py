@@ -164,3 +164,32 @@ class TestParseUnknownFields:
         result = parse_live_data(data)
         assert result.consumption == pytest.approx(100.0)
         # No exception raised
+
+
+class TestParseInvalidFields:
+    def test_parse_invalid_fields_default_safely(self):
+        data = {
+            "measuredAt": 123,
+            "consumption": None,
+            "grid": "invalid",
+            "battery": "not-a-dict",
+            "batteries": [None, {"applianceID": 42, "power": "bad"}],
+            "heatPumps": "wrong-type",
+            "evChargingStations": [[], {"applianceID": "ev-1", "currentL1": ""}],
+            "heaters": [True, {"temperature": "oops"}],
+        }
+
+        result = parse_live_data(data)
+
+        assert result.measured_at is None
+        assert result.consumption == pytest.approx(0.0)
+        assert result.grid == pytest.approx(0.0)
+        assert result.battery_power == pytest.approx(0.0)
+        assert len(result.batteries) == 1
+        assert result.batteries[0].appliance_id == "42"
+        assert result.batteries[0].power == pytest.approx(0.0)
+        assert result.heat_pumps == []
+        assert len(result.ev_charging_stations) == 1
+        assert result.ev_charging_stations[0].current_l1 == pytest.approx(0.0)
+        assert len(result.heaters) == 1
+        assert result.heaters[0].temperature == pytest.approx(0.0)

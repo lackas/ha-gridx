@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+
+.pytest_cache/
+.ruff_cache/
+
+*.swp
+*.swo
+*~
+
+.DS_Store

@@ -134,6 +134,20 @@ class TestGetLiveData:
                 with pytest.raises(GridxApiError):
                     await api.async_get_live_data(system_id)
 
+    @pytest.mark.asyncio
+    async def test_get_live_data_invalid_payload_raises_api_error(self):
+        system_id = "system-id-001"
+        url = API_LIVE_URL.format(system_id)
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.get(url, payload=[])
+                with pytest.raises(GridxApiError, match="Unexpected live data payload"):
+                    await api.async_get_live_data(system_id)
+
 
 class TestTokenRefresh:
     @pytest.mark.asyncio
