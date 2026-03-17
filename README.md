@@ -55,6 +55,10 @@ The integration creates devices based on your system:
 
 Multiple appliances of the same type are supported (e.g., "gridX Battery" and "gridX Battery 2").
 
+## Disclaimer
+
+This is an unofficial, community-maintained integration. It is not affiliated with, endorsed by, or supported by gridX GmbH or E.ON SE.
+
 ## Credits
 
 Inspired by and based on the work of:
