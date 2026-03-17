@@ -34,19 +34,26 @@ Copy the `custom_components/gridx` folder to your Home Assistant `custom_compone
 2. Search for "gridX"
 3. Enter your E.ON Home / gridX account email and password
 
+## Updating
+
+1. Open HACS → Integrations → gridX Energy Management
+2. Click "Update information" to refresh repository data
+3. Click "Redownload" and confirm
+4. Go to Settings → System → a "Restart required" repair will appear — click Restart
+
 ## Devices & Entities
 
 The integration creates devices based on your system:
 
 | Device | Entities | Created when |
 |--------|---------|-------------|
-| gridX Gateway | 17 sensors (power flows, rates, meter readings) | Always |
-| Battery | 7 sensors (SoC, power, charge/discharge, capacity) | If battery present |
-| Heat Pump | 2 sensors (power, SG Ready state) | If heat pump present |
-| EV Charger | 6 sensors (power, SoC, currents, total energy) | If EV charger present |
-| Heater | 2 sensors (power, temperature) | If heater present |
+| gridX | 17 sensors (power flows, rates, meter readings) | Always |
+| gridX Battery | 7 sensors (SoC, power, charge/discharge, capacity) | If battery present |
+| gridX Heat Pump | 2 sensors (power, SG Ready state) | If heat pump present |
+| gridX EV Charger | 6 sensors (power, SoC, currents, total energy) | If EV charger present |
+| gridX Heater | 2 sensors (power, temperature) | If heater present |
 
-Multiple appliances of the same type are supported (e.g., "Battery" and "Battery 2").
+Multiple appliances of the same type are supported (e.g., "gridX Battery" and "gridX Battery 2").
 
 ## Credits
 
