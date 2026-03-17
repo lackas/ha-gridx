@@ -218,7 +218,7 @@ SYSTEM_SENSOR_DESCRIPTIONS: tuple[GridxSystemSensorDescription, ...] = (
 
 BATTERY_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
     GridxApplianceSensorDescription(
-        key="state_of_charge",
+        key="battery_state_of_charge",
         translation_key="battery_state_of_charge",
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
@@ -227,7 +227,7 @@ BATTERY_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda b: round(b.state_of_charge * 100, 10),
     ),
     GridxApplianceSensorDescription(
-        key="power",
+        key="battery_power",
         translation_key="battery_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -236,7 +236,7 @@ BATTERY_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda b: b.power,
     ),
     GridxApplianceSensorDescription(
-        key="charge",
+        key="battery_charge",
         translation_key="battery_charge",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -245,7 +245,7 @@ BATTERY_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda b: b.charge,
     ),
     GridxApplianceSensorDescription(
-        key="discharge",
+        key="battery_discharge",
         translation_key="battery_discharge",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -254,7 +254,7 @@ BATTERY_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda b: b.discharge,
     ),
     GridxApplianceSensorDescription(
-        key="remaining_charge",
+        key="battery_remaining_charge",
         translation_key="battery_remaining_charge",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY_STORAGE,
@@ -263,7 +263,7 @@ BATTERY_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda b: b.remaining_charge,
     ),
     GridxApplianceSensorDescription(
-        key="capacity",
+        key="battery_capacity",
         translation_key="battery_capacity",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY_STORAGE,
@@ -273,7 +273,7 @@ BATTERY_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda b: b.capacity,
     ),
     GridxApplianceSensorDescription(
-        key="nominal_capacity",
+        key="battery_nominal_capacity",
         translation_key="battery_nominal_capacity",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY_STORAGE,
@@ -290,7 +290,7 @@ BATTERY_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
 
 HEAT_PUMP_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
     GridxApplianceSensorDescription(
-        key="power",
+        key="heat_pump_power",
         translation_key="heat_pump_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -299,7 +299,7 @@ HEAT_PUMP_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda hp: hp.power,
     ),
     GridxApplianceSensorDescription(
-        key="sg_ready_state",
+        key="heat_pump_sg_ready_state",
         translation_key="heat_pump_sg_ready_state",
         native_unit_of_measurement=None,
         device_class=SensorDeviceClass.ENUM,
@@ -315,7 +315,7 @@ HEAT_PUMP_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
 
 EV_CHARGER_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
     GridxApplianceSensorDescription(
-        key="power",
+        key="ev_charger_power",
         translation_key="ev_charger_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -324,7 +324,7 @@ EV_CHARGER_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda ev: ev.power,
     ),
     GridxApplianceSensorDescription(
-        key="state_of_charge",
+        key="ev_charger_state_of_charge",
         translation_key="ev_charger_state_of_charge",
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
@@ -333,7 +333,7 @@ EV_CHARGER_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda ev: round(ev.state_of_charge * 100, 10),
     ),
     GridxApplianceSensorDescription(
-        key="current_l1",
+        key="ev_charger_current_l1",
         translation_key="ev_charger_current_l1",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -342,7 +342,7 @@ EV_CHARGER_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda ev: ev.current_l1,
     ),
     GridxApplianceSensorDescription(
-        key="current_l2",
+        key="ev_charger_current_l2",
         translation_key="ev_charger_current_l2",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -351,7 +351,7 @@ EV_CHARGER_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda ev: ev.current_l2,
     ),
     GridxApplianceSensorDescription(
-        key="current_l3",
+        key="ev_charger_current_l3",
         translation_key="ev_charger_current_l3",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -360,7 +360,7 @@ EV_CHARGER_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda ev: ev.current_l3,
     ),
     GridxApplianceSensorDescription(
-        key="reading_total",
+        key="ev_charger_reading_total",
         translation_key="ev_charger_reading_total",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -376,7 +376,7 @@ EV_CHARGER_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
 
 HEATER_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
     GridxApplianceSensorDescription(
-        key="power",
+        key="heater_power",
         translation_key="heater_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -385,7 +385,7 @@ HEATER_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         value_fn=lambda h: h.power,
     ),
     GridxApplianceSensorDescription(
-        key="temperature",
+        key="heater_temperature",
         translation_key="heater_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
