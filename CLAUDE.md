@@ -27,8 +27,20 @@ ha-gridx is a HACS-compatible Home Assistant integration for gridX-based energy 
 ### Running Tests
 
 ```bash
-~/src/venv/ha/bin/pytest tests/ -x --timeout=10
+# All tests
+~/src/venv/ha/bin/python -m pytest tests/components/gridx/ -v
+
+# Single test file
+~/src/venv/ha/bin/python -m pytest tests/components/gridx/test_models.py -v
+
+# Single test
+~/src/venv/ha/bin/python -m pytest tests/components/gridx/test_models.py::TestParseFullResponse -v
+
+# With timeout (recommended)
+~/src/venv/ha/bin/python -m pytest tests/components/gridx/ -v -x --timeout=10
 ```
+
+Note: Use `~/src/venv/ha/bin/python -m pytest` (not bare `pytest`) to ensure the HA venv with all dependencies is used. The system Python does not have pytest or HA installed.
 
 ### Linting
 
