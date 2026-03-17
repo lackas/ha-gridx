@@ -188,3 +188,23 @@ class TestAuthCooldown:
             # Token from first call is still there
             assert api._token is not None
             assert api._token["id_token"] == "id-token-xyz"
+
+    @pytest.mark.asyncio
+    async def test_auth_cooldown_does_not_hide_missing_token(self):
+        """A failed auth attempt must not leave later calls without a token."""
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(
+                    AUTH0_TOKEN_URL,
+                    exception=aiohttp.ClientError("temporary auth failure"),
+                )
+                with pytest.raises(GridxConnectionError):
+                    await api.authenticate()
+
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                await api.authenticate()
+
+            assert api._token is not None
+            assert api._token["id_token"] == "id-token-xyz"

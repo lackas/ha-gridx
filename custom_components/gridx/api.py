@@ -54,7 +54,10 @@ class GridxApi:
     async def authenticate(self) -> None:
         """Authenticate with Auth0 and store the token."""
         now = time.monotonic()
-        if now - self._last_auth_attempt < AUTH_COOLDOWN_SECONDS:
+        if (
+            self._token is not None
+            and now - self._last_auth_attempt < AUTH_COOLDOWN_SECONDS
+        ):
             # Cooldown: skip hitting Auth0 again
             return
 
@@ -71,9 +74,7 @@ class GridxApi:
         }
 
         try:
-            async with self._session.post(
-                AUTH0_TOKEN_URL, json=payload
-            ) as resp:
+            async with self._session.post(AUTH0_TOKEN_URL, json=payload) as resp:
                 if resp.status in (401, 403):
                     raise GridxAuthenticationError(
                         f"Authentication failed: HTTP {resp.status}"
@@ -109,9 +110,7 @@ class GridxApi:
         }
 
         try:
-            async with self._session.post(
-                AUTH0_TOKEN_URL, json=payload
-            ) as resp:
+            async with self._session.post(AUTH0_TOKEN_URL, json=payload) as resp:
                 if resp.status in (401, 403):
                     raise GridxAuthenticationError(
                         f"Token refresh failed: HTTP {resp.status}"
