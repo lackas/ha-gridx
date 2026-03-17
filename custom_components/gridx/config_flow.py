@@ -4,7 +4,12 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import GridxApi, GridxAuthenticationError, GridxConnectionError
+from .api import (
+    GridxApi,
+    GridxApiError,
+    GridxAuthenticationError,
+    GridxConnectionError,
+)
 from .const import DOMAIN
 
 
@@ -29,7 +34,7 @@ class GridxConfigFlow(ConfigFlow, domain=DOMAIN):
                     errors["base"] = "cannot_connect"
             except GridxAuthenticationError:
                 errors["base"] = "invalid_auth"
-            except GridxConnectionError:
+            except (GridxConnectionError, GridxApiError):
                 errors["base"] = "cannot_connect"
             else:
                 if not errors:
@@ -74,7 +79,7 @@ class GridxConfigFlow(ConfigFlow, domain=DOMAIN):
                 await api.authenticate()
             except GridxAuthenticationError:
                 errors["base"] = "invalid_auth"
-            except GridxConnectionError:
+            except (GridxConnectionError, GridxApiError):
                 errors["base"] = "cannot_connect"
             else:
                 self.hass.config_entries.async_update_entry(
