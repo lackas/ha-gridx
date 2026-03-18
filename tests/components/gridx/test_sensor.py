@@ -360,6 +360,7 @@ class TestNoAppliances:
         from unittest.mock import MagicMock
 
         from custom_components.gridx.sensor import (
+            GridxApplianceEnergySensor,
             GridxApplianceSensor,
             GridxSystemSensor,
             _build_entities,
@@ -379,10 +380,57 @@ class TestNoAppliances:
         appliance_count = sum(
             1 for e in entities if isinstance(e, GridxApplianceSensor)
         )
+        energy_count = sum(
+            1 for e in entities if isinstance(e, GridxApplianceEnergySensor)
+        )
 
         assert system_count == 17
         # 7 battery + 2 heat pump = 9 appliance sensors
         assert appliance_count == 9
+        # 1 heat pump energy sensor
+        assert energy_count == 1
+
+
+# ---------------------------------------------------------------------------
+# Energy sensor class attributes
+# ---------------------------------------------------------------------------
+
+
+class TestEnergySensor:
+    def test_energy_sensor_uses_restore_sensor(self):
+        """Energy sensor must inherit from RestoreSensor for state restoration."""
+        from homeassistant.components.sensor import RestoreSensor
+
+        from custom_components.gridx.sensor import GridxApplianceEnergySensor
+
+        assert issubclass(GridxApplianceEnergySensor, RestoreSensor)
+
+    def test_energy_sensor_created_for_heat_pump(self):
+        """Each heat pump gets an energy accumulator sensor."""
+        from unittest.mock import MagicMock
+
+        from custom_components.gridx.sensor import (
+            GridxApplianceEnergySensor,
+            _build_entities,
+        )
+
+        data = GridxSystemData(
+            heat_pumps=[
+                GridxHeatPump(appliance_id="hp-1", sg_ready_state="AUTO"),
+                GridxHeatPump(appliance_id="hp-2", sg_ready_state="OFF"),
+            ],
+        )
+        coordinator = MagicMock()
+        coordinator.data = {"sys-1": data}
+
+        entities = _build_entities(coordinator)
+        energy_entities = [
+            e for e in entities if isinstance(e, GridxApplianceEnergySensor)
+        ]
+
+        assert len(energy_entities) == 2
+        unique_ids = {e._attr_unique_id for e in energy_entities}
+        assert unique_ids == {"hp-1_heat_pump_energy", "hp-2_heat_pump_energy"}
 
 
 # ---------------------------------------------------------------------------

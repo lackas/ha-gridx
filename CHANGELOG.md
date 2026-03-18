@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.7] - 2026-03-18
+
+### Fixed
+
+- Fix heat pump energy sensor permanently unavailable (was using `RestoreEntity` instead of `RestoreSensor`, causing `async_get_last_sensor_data` to fail silently)
+
 ## [1.0.6] - 2026-03-18
 
 ### Fixed

@@ -25,7 +25,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.components.sensor import RestoreSensor
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -494,9 +494,7 @@ class GridxApplianceSensor(CoordinatorEntity[GridxCoordinator], SensorEntity):
         )
 
 
-class GridxApplianceEnergySensor(
-    CoordinatorEntity[GridxCoordinator], RestoreEntity, SensorEntity
-):
+class GridxApplianceEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSensor):
     """Accumulates energy (kWh) from a power sensor by integrating over time."""
 
     _attr_has_entity_name = True
