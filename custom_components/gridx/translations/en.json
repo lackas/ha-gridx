@@ -51,8 +51,18 @@
       "grid_meter_reading_negative": { "name": "Grid meter export" },
       "grid_meter_reading_positive": { "name": "Grid meter import" },
       "heat_pump": { "name": "Heat pump" },
+      "heat_pump_energy": { "name": "Energy" },
       "heat_pump_power": { "name": "Power" },
-      "heat_pump_sg_ready_state": { "name": "SG Ready state" },
+      "heat_pump_sg_ready_state": {
+        "name": "SG Ready state",
+        "state": {
+          "unknown": "Unknown",
+          "off": "Off",
+          "auto": "Auto",
+          "recommend_on": "Recommend on",
+          "on": "On"
+        }
+      },
       "heater_power": { "name": "Power" },
       "heater_temperature": { "name": "Temperature" },
       "photovoltaic": { "name": "Photovoltaic" },

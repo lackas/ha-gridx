@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -21,9 +22,10 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -305,7 +307,7 @@ HEAT_PUMP_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         device_class=SensorDeviceClass.ENUM,
         state_class=None,
         options=SG_READY_STATES,
-        value_fn=lambda hp: hp.sg_ready_state,
+        value_fn=lambda hp: hp.sg_ready_state if hp.sg_ready_state in SG_READY_STATES else None,
     ),
 )
 
@@ -490,6 +492,82 @@ class GridxApplianceSensor(CoordinatorEntity[GridxCoordinator], SensorEntity):
         )
 
 
+class GridxApplianceEnergySensor(
+    CoordinatorEntity[GridxCoordinator], RestoreEntity, SensorEntity
+):
+    """Accumulates energy (kWh) from a power sensor by integrating over time."""
+
+    _attr_has_entity_name = True
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_suggested_display_precision = 3
+
+    def __init__(
+        self,
+        coordinator: GridxCoordinator,
+        system_id: str,
+        appliance_id: str,
+        appliance_type: str,
+        device_name: str,
+        key: str,
+        translation_key: str,
+        power_fn: Callable[[Any], float],
+    ) -> None:
+        super().__init__(coordinator)
+        self._system_id = system_id
+        self._appliance_id = appliance_id
+        self._appliance_type = appliance_type
+        self._device_name = device_name
+        self._power_fn = power_fn
+        self._attr_translation_key = translation_key
+        self._attr_unique_id = f"{appliance_id}_{key}"
+        self._accumulated: float = 0.0
+        self._last_update: datetime | None = None
+
+    async def async_added_to_hass(self) -> None:
+        """Restore accumulated energy after restart."""
+        await super().async_added_to_hass()
+        if (last_state := await self.async_get_last_sensor_data()) is not None:
+            if last_state.native_value is not None:
+                self._accumulated = float(last_state.native_value)
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Accumulate energy from power reading."""
+        data = self.coordinator.data.get(self._system_id)
+        if data is None:
+            super()._handle_coordinator_update()
+            return
+
+        appliances: list[Any] = getattr(data, self._appliance_type, [])
+        power_w: float | None = None
+        for appliance in appliances:
+            if appliance.appliance_id == self._appliance_id:
+                power_w = self._power_fn(appliance)
+                break
+
+        now = datetime.now(timezone.utc)
+        if power_w is not None and self._last_update is not None:
+            delta_h = (now - self._last_update).total_seconds() / 3600
+            self._accumulated += (power_w / 1000) * delta_h
+        self._last_update = now
+
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> StateType:
+        return round(self._accumulated, 3)
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._appliance_id)},
+            name=self._device_name,
+            via_device=(DOMAIN, self._system_id),
+        )
+
+
 # ---------------------------------------------------------------------------
 # Entity builder (extracted for testability)
 # ---------------------------------------------------------------------------
@@ -533,6 +611,24 @@ def _build_entities(coordinator: GridxCoordinator) -> list:
                             description=description,
                         )
                     )
+
+        # Energy accumulator sensors for heat pumps
+        for index, hp in enumerate(system_data.heat_pumps):
+            device_name = _appliance_device_name(
+                "gridX Heat Pump", index, len(system_data.heat_pumps)
+            )
+            entities.append(
+                GridxApplianceEnergySensor(
+                    coordinator=coordinator,
+                    system_id=system_id,
+                    appliance_id=hp.appliance_id,
+                    appliance_type="heat_pumps",
+                    device_name=device_name,
+                    key="heat_pump_energy",
+                    translation_key="heat_pump_energy",
+                    power_fn=lambda h: h.power,
+                )
+            )
 
     return entities
 

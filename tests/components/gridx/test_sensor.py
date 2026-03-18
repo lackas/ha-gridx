@@ -175,13 +175,22 @@ class TestBatterySensorValueExtraction:
 
 class TestHeatPumpSensorValueExtraction:
     def test_heat_pump_sg_ready_state(self):
-        """sg_ready_state value_fn returns the string directly."""
-        hp = GridxHeatPump(appliance_id="hp-1", power=500.0, sg_ready_state="BOOST")
-
+        """sg_ready_state value_fn returns known states, None for unknown."""
         (_, _, HEAT_PUMP_SENSOR_DESCRIPTIONS, _, _) = _get_descriptions()
         desc_map = {d.key: d for d in HEAT_PUMP_SENSOR_DESCRIPTIONS}
+        sg_fn = desc_map["heat_pump_sg_ready_state"].value_fn
 
-        assert desc_map["heat_pump_sg_ready_state"].value_fn(hp) == "BOOST"
+        # Known states pass through
+        for state in ["UNKNOWN", "OFF", "AUTO", "RECOMMEND_ON", "ON"]:
+            hp = GridxHeatPump(appliance_id="hp-1", power=500.0, sg_ready_state=state)
+            assert sg_fn(hp) == state
+
+        # Unknown state returns None (avoids entity becoming unavailable)
+        hp = GridxHeatPump(appliance_id="hp-1", power=500.0, sg_ready_state="FUTURE_STATE")
+        assert sg_fn(hp) is None
+
+        # Power still works
+        hp = GridxHeatPump(appliance_id="hp-1", power=500.0, sg_ready_state="AUTO")
         assert desc_map["heat_pump_power"].value_fn(hp) == pytest.approx(500.0)
 
     def test_heat_pump_descriptions_count(self):

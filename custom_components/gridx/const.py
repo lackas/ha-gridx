@@ -25,5 +25,5 @@ ERROR_SCAN_INTERVAL_MAX: Final = 900
 # Auth cooldown
 AUTH_COOLDOWN_SECONDS: Final = 60
 
-# SG Ready states
-SG_READY_STATES: Final = ["AUTO", "BOOST", "OFF", "BLOCK"]
+# SG Ready states (from gridX OpenAPI spec)
+SG_READY_STATES: Final = ["UNKNOWN", "OFF", "AUTO", "RECOMMEND_ON", "ON"]
