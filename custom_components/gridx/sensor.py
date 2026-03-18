@@ -307,7 +307,9 @@ HEAT_PUMP_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         device_class=SensorDeviceClass.ENUM,
         state_class=None,
         options=SG_READY_STATES,
-        value_fn=lambda hp: hp.sg_ready_state if hp.sg_ready_state in SG_READY_STATES else None,
+        value_fn=lambda hp: (
+            hp.sg_ready_state if hp.sg_ready_state in SG_READY_STATES else None
+        ),
     ),
 )
 

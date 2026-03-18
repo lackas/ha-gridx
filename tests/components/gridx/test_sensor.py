@@ -186,7 +186,9 @@ class TestHeatPumpSensorValueExtraction:
             assert sg_fn(hp) == state
 
         # Unknown state returns None (avoids entity becoming unavailable)
-        hp = GridxHeatPump(appliance_id="hp-1", power=500.0, sg_ready_state="FUTURE_STATE")
+        hp = GridxHeatPump(
+            appliance_id="hp-1", power=500.0, sg_ready_state="FUTURE_STATE"
+        )
         assert sg_fn(hp) is None
 
         # Power still works
