@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.9] - 2026-03-20
+
+### Fixed
+
+- Fix energy sensor names all showing as "gridX Energy" instead of distinct names (missing translations in en.json)
+
 ## [1.0.8] - 2026-03-20
 
 ### Added
