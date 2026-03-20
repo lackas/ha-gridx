@@ -41,10 +41,11 @@ def mock_coordinator(mock_system_data):
 
 
 @pytest.fixture
-def mock_entry():
-    """Return a mock config entry."""
+def mock_entry(mock_coordinator):
+    """Return a mock config entry with runtime_data."""
     entry = MagicMock()
     entry.entry_id = "test_entry_id"
+    entry.runtime_data = mock_coordinator
     entry.as_dict.return_value = {
         "entry_id": "test_entry_id",
         "domain": "gridx",
@@ -59,11 +60,9 @@ def mock_entry():
 
 
 @pytest.fixture
-def mock_hass(mock_coordinator, mock_entry):
-    """Return a mock hass with coordinator registered."""
-    hass = MagicMock()
-    hass.data = {"gridx": {mock_entry.entry_id: mock_coordinator}}
-    return hass
+def mock_hass():
+    """Return a mock hass."""
+    return MagicMock()
 
 
 @pytest.mark.asyncio

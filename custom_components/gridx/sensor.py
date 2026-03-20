@@ -746,5 +746,4 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up gridX sensor entities from a config entry."""
-    coordinator: GridxCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(_build_entities(coordinator))
+    async_add_entities(_build_entities(entry.runtime_data))

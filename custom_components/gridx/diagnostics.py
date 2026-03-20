@@ -4,8 +4,6 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
-
 REDACT_KEYS = {"email", "password", "access_token", "refresh_token", "id_token"}
 
 
@@ -13,7 +11,7 @@ async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
 ) -> dict:
     """Return diagnostics for a config entry."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
     return async_redact_data(
         {
             "config_entry": entry.as_dict(),
