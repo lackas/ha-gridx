@@ -28,31 +28,90 @@
   },
   "entity": {
     "sensor": {
-      "battery_capacity": { "name": "Usable capacity" },
-      "battery_charge": { "name": "Charging power" },
-      "battery_discharge": { "name": "Discharging power" },
-      "battery_nominal_capacity": { "name": "Nominal capacity" },
-      "battery_power": { "name": "Power" },
-      "battery_remaining_charge": { "name": "Remaining charge" },
-      "battery_state_of_charge": { "name": "State of charge" },
-      "consumption": { "name": "Consumption" },
-      "direct_consumption_ev": { "name": "Direct consumption EV" },
-      "direct_consumption_heat_pump": { "name": "Direct consumption heat pump" },
-      "direct_consumption_heater": { "name": "Direct consumption heater" },
-      "direct_consumption_household": { "name": "Direct consumption household" },
-      "direct_consumption_rate": { "name": "Direct consumption rate" },
-      "ev_charger_current_l1": { "name": "Current L1" },
-      "ev_charger_current_l2": { "name": "Current L2" },
-      "ev_charger_current_l3": { "name": "Current L3" },
-      "ev_charger_power": { "name": "Power" },
-      "ev_charger_reading_total": { "name": "Total energy" },
-      "ev_charger_state_of_charge": { "name": "State of charge" },
-      "grid": { "name": "Grid" },
-      "grid_meter_reading_negative": { "name": "Grid meter export" },
-      "grid_meter_reading_positive": { "name": "Grid meter import" },
-      "heat_pump": { "name": "Heat pump" },
-      "heat_pump_energy": { "name": "Energy" },
-      "heat_pump_power": { "name": "Power" },
+      "battery_capacity": {
+        "name": "Usable capacity"
+      },
+      "battery_charge": {
+        "name": "Charging power"
+      },
+      "battery_discharge": {
+        "name": "Discharging power"
+      },
+      "battery_nominal_capacity": {
+        "name": "Nominal capacity"
+      },
+      "battery_power": {
+        "name": "Power"
+      },
+      "battery_remaining_charge": {
+        "name": "Remaining charge"
+      },
+      "battery_state_of_charge": {
+        "name": "State of charge"
+      },
+      "consumption": {
+        "name": "Consumption"
+      },
+      "consumption_energy": {
+        "name": "Consumption energy"
+      },
+      "direct_consumption_ev": {
+        "name": "Direct consumption EV"
+      },
+      "direct_consumption_heat_pump": {
+        "name": "Direct consumption heat pump"
+      },
+      "direct_consumption_heater": {
+        "name": "Direct consumption heater"
+      },
+      "direct_consumption_household": {
+        "name": "Direct consumption household"
+      },
+      "direct_consumption_rate": {
+        "name": "Direct consumption rate"
+      },
+      "ev_charger_current_l1": {
+        "name": "Current L1"
+      },
+      "ev_charger_current_l2": {
+        "name": "Current L2"
+      },
+      "ev_charger_current_l3": {
+        "name": "Current L3"
+      },
+      "ev_charger_power": {
+        "name": "Power"
+      },
+      "ev_charger_reading_total": {
+        "name": "Total energy"
+      },
+      "ev_charger_state_of_charge": {
+        "name": "State of charge"
+      },
+      "grid": {
+        "name": "Grid"
+      },
+      "grid_export_energy": {
+        "name": "Grid export energy"
+      },
+      "grid_import_energy": {
+        "name": "Grid import energy"
+      },
+      "grid_meter_reading_negative": {
+        "name": "Grid meter export"
+      },
+      "grid_meter_reading_positive": {
+        "name": "Grid meter import"
+      },
+      "heat_pump": {
+        "name": "Heat pump"
+      },
+      "heat_pump_energy": {
+        "name": "Energy"
+      },
+      "heat_pump_power": {
+        "name": "Power"
+      },
       "heat_pump_sg_ready_state": {
         "name": "SG Ready state",
         "state": {
@@ -63,15 +122,48 @@
           "on": "On"
         }
       },
-      "heater_power": { "name": "Power" },
-      "heater_temperature": { "name": "Temperature" },
-      "photovoltaic": { "name": "Photovoltaic" },
-      "production": { "name": "Production" },
-      "self_consumption": { "name": "Self consumption" },
-      "self_consumption_rate": { "name": "Self consumption rate" },
-      "self_sufficiency_rate": { "name": "Self sufficiency rate" },
-      "self_supply": { "name": "Self supply" },
-      "total_consumption": { "name": "Total consumption" }
+      "heater_power": {
+        "name": "Power"
+      },
+      "heater_temperature": {
+        "name": "Temperature"
+      },
+      "photovoltaic": {
+        "name": "Photovoltaic"
+      },
+      "photovoltaic_energy": {
+        "name": "Photovoltaic energy"
+      },
+      "production": {
+        "name": "Production"
+      },
+      "production_energy": {
+        "name": "Production energy"
+      },
+      "self_consumption": {
+        "name": "Self consumption"
+      },
+      "self_consumption_energy": {
+        "name": "Self consumption energy"
+      },
+      "self_consumption_rate": {
+        "name": "Self consumption rate"
+      },
+      "self_sufficiency_rate": {
+        "name": "Self sufficiency rate"
+      },
+      "self_supply": {
+        "name": "Self supply"
+      },
+      "self_supply_energy": {
+        "name": "Self supply energy"
+      },
+      "total_consumption": {
+        "name": "Total consumption"
+      },
+      "total_consumption_energy": {
+        "name": "Total consumption energy"
+      }
     }
   }
 }

@@ -494,6 +494,68 @@ class GridxApplianceSensor(CoordinatorEntity[GridxCoordinator], SensorEntity):
         )
 
 
+class GridxSystemEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSensor):
+    """Accumulates energy (kWh) from a system-level power sensor."""
+
+    _attr_has_entity_name = True
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_suggested_display_precision = 3
+
+    def __init__(
+        self,
+        coordinator: GridxCoordinator,
+        system_id: str,
+        key: str,
+        translation_key: str,
+        power_fn: Callable[[GridxSystemData], float],
+    ) -> None:
+        super().__init__(coordinator)
+        self._system_id = system_id
+        self._power_fn = power_fn
+        self._attr_translation_key = translation_key
+        self._attr_unique_id = f"{system_id}_{key}"
+        self._accumulated: float = 0.0
+        self._last_update: datetime | None = None
+
+    async def async_added_to_hass(self) -> None:
+        """Restore accumulated energy after restart."""
+        await super().async_added_to_hass()
+        if (last_state := await self.async_get_last_sensor_data()) is not None:
+            if last_state.native_value is not None:
+                self._accumulated = float(last_state.native_value)
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Accumulate energy from power reading."""
+        data = self.coordinator.data.get(self._system_id)
+        if data is None:
+            super()._handle_coordinator_update()
+            return
+
+        power_w = self._power_fn(data)
+        now = datetime.now(timezone.utc)
+        if power_w is not None and self._last_update is not None:
+            delta_h = (now - self._last_update).total_seconds() / 3600
+            self._accumulated += (abs(power_w) / 1000) * delta_h
+        self._last_update = now
+
+        super()._handle_coordinator_update()
+
+    @property
+    def native_value(self) -> StateType:
+        return round(self._accumulated, 3)
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._system_id)},
+            name="gridX",
+            manufacturer="gridX",
+        )
+
+
 class GridxApplianceEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSensor):
     """Accumulates energy (kWh) from a power sensor by integrating over time."""
 
@@ -572,6 +634,34 @@ class GridxApplianceEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSen
 # Entity builder (extracted for testability)
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# System-level energy accumulator definitions
+# (key, translation_key, power_fn)
+# These integrate power (W) into energy (kWh) for the Energy Dashboard.
+# Grid uses abs() since grid_import/grid_export are separate sensors
+# tracking positive and negative flow independently.
+# ---------------------------------------------------------------------------
+
+_SYSTEM_ENERGY_SENSORS: list[tuple[str, str, Callable[[GridxSystemData], float]]] = [
+    ("photovoltaic_energy", "photovoltaic_energy", lambda d: d.photovoltaic),
+    ("production_energy", "production_energy", lambda d: d.production),
+    ("consumption_energy", "consumption_energy", lambda d: d.consumption),
+    (
+        "total_consumption_energy",
+        "total_consumption_energy",
+        lambda d: d.total_consumption,
+    ),
+    ("grid_import_energy", "grid_import_energy", lambda d: max(0.0, d.grid)),
+    ("grid_export_energy", "grid_export_energy", lambda d: max(0.0, -d.grid)),
+    (
+        "self_consumption_energy",
+        "self_consumption_energy",
+        lambda d: d.self_consumption,
+    ),
+    ("self_supply_energy", "self_supply_energy", lambda d: d.self_supply),
+]
+
+
 _APPLIANCE_CONFIG: list[tuple[str, str, tuple, str]] = [
     ("batteries", "gridX Battery", BATTERY_SENSOR_DESCRIPTIONS, "batteries"),
     ("heat_pumps", "gridX Heat Pump", HEAT_PUMP_SENSOR_DESCRIPTIONS, "heat_pumps"),
@@ -593,6 +683,18 @@ def _build_entities(coordinator: GridxCoordinator) -> list:
         # System-level sensors
         for description in SYSTEM_SENSOR_DESCRIPTIONS:
             entities.append(GridxSystemSensor(coordinator, system_id, description))
+
+        # System-level energy accumulators (Riemann integration from power)
+        for key, translation_key, power_fn in _SYSTEM_ENERGY_SENSORS:
+            entities.append(
+                GridxSystemEnergySensor(
+                    coordinator=coordinator,
+                    system_id=system_id,
+                    key=key,
+                    translation_key=translation_key,
+                    power_fn=power_fn,
+                )
+            )
 
         # Appliance-level sensors
         for attr_name, base_name, descriptions, _ in _APPLIANCE_CONFIG:

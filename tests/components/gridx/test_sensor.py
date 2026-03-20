@@ -345,14 +345,23 @@ class TestNoAppliances:
 
         entities = _build_entities(coordinator)
 
-        from custom_components.gridx.sensor import GridxSystemSensor
+        from custom_components.gridx.sensor import (
+            GridxSystemSensor,
+            GridxSystemEnergySensor,
+        )
 
-        system_entities = [e for e in entities if isinstance(e, GridxSystemSensor)]
+        system_entities = [
+            e
+            for e in entities
+            if isinstance(e, (GridxSystemSensor, GridxSystemEnergySensor))
+        ]
         appliance_entities = [
-            e for e in entities if not isinstance(e, GridxSystemSensor)
+            e
+            for e in entities
+            if not isinstance(e, (GridxSystemSensor, GridxSystemEnergySensor))
         ]
 
-        assert len(system_entities) == 17
+        assert len(system_entities) == 17 + 8  # 17 power/rate + 8 energy accumulators
         assert len(appliance_entities) == 0
 
     def test_with_appliances_creates_entities(self):
