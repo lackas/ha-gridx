@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.8] - 2026-03-20
+
+### Added
+
+- System-level energy sensors (kWh) for the Energy Dashboard: photovoltaic, production, consumption, total consumption, grid import/export, self consumption, self supply
+
 ## [1.0.7] - 2026-03-18
 
 ### Fixed
