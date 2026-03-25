@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.10] - 2026-03-25
+
+### Fixed
+
+- Fix grid meter reading unit: gridX API returns values in Ws (watt-seconds), not Wh — readings were 3600x too high, inflating Energy Dashboard statistics
+
+### ⚠️ Action required after update
+
+The corrected values will be 3600x smaller. HA will interpret this as a meter reset and add phantom energy to the statistics. To fix: go to **Developer Tools → Statistics**, find `gridx_grid_meter_import` and `gridx_grid_meter_export`, and click "Fix issue" to reset their accumulated values.
+
 ## [1.0.9] - 2026-03-20
 
 ### Fixed

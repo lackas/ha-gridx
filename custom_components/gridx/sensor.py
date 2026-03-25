@@ -194,6 +194,9 @@ SYSTEM_SENSOR_DESCRIPTIONS: tuple[GridxSystemSensorDescription, ...] = (
         suggested_display_precision=0,
         value_fn=lambda d: d.heat_pump,
     ),
+    # NOTE: The gridX API returns meter readings in Ws (watt-seconds / joules),
+    # not Wh. See OpenAPI spec: "Meter reading for grid in Ws".
+    # Convert Ws → Wh by dividing by 3600.
     GridxSystemSensorDescription(
         key="grid_meter_reading_negative",
         translation_key="grid_meter_reading_negative",
@@ -201,7 +204,7 @@ SYSTEM_SENSOR_DESCRIPTIONS: tuple[GridxSystemSensorDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=0,
-        value_fn=lambda d: d.grid_meter_reading_negative,
+        value_fn=lambda d: d.grid_meter_reading_negative / 3600,
     ),
     GridxSystemSensorDescription(
         key="grid_meter_reading_positive",
@@ -210,7 +213,7 @@ SYSTEM_SENSOR_DESCRIPTIONS: tuple[GridxSystemSensorDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=0,
-        value_fn=lambda d: d.grid_meter_reading_positive,
+        value_fn=lambda d: d.grid_meter_reading_positive / 3600,
     ),
 )
 

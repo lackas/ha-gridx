@@ -97,11 +97,12 @@ class TestSystemSensorValueExtraction:
             90.0
         )
         assert desc_map["heat_pump"].value_fn(data) == pytest.approx(110.0)
+        # API returns Ws, value_fn converts to Wh (÷ 3600)
         assert desc_map["grid_meter_reading_negative"].value_fn(data) == pytest.approx(
-            5000.0
+            5000.0 / 3600
         )
         assert desc_map["grid_meter_reading_positive"].value_fn(data) == pytest.approx(
-            9000.0
+            9000.0 / 3600
         )
 
     def test_rate_sensors_multiply_by_100(self):
