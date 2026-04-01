@@ -128,6 +128,18 @@
       "heater_temperature": {
         "name": "Temperature"
       },
+      "hist_battery_charge": {
+        "name": "Battery charge today"
+      },
+      "hist_battery_discharge": {
+        "name": "Battery discharge today"
+      },
+      "hist_direct_consumption_heat_pump": {
+        "name": "Direct consumption heat pump today"
+      },
+      "hist_heat_pump_energy": {
+        "name": "Heat pump energy today"
+      },
       "photovoltaic": {
         "name": "Photovoltaic"
       },

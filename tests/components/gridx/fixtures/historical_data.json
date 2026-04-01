@@ -1,0 +1,37 @@
+{
+  "resolution": "1h",
+  "interval": "2026-03-31T00:00:00+02:00/2026-03-31T15:30:00+02:00",
+  "total": {
+    "battery": {
+      "charge": 4820.0,
+      "discharge": 4175.0
+    },
+    "heatPump": 9630.0,
+    "heatPumpMeterReadingPositive": 34668000.0,
+    "directConsumptionHeatPump": 2310.0
+  },
+  "series": [
+    {
+      "start": "2026-03-31T00:00:00+02:00",
+      "end": "2026-03-31T01:00:00+02:00",
+      "battery": {
+        "charge": 340.0,
+        "discharge": 190.0
+      },
+      "heatPump": 610.0,
+      "heatPumpMeterReadingPositive": 2196000.0,
+      "directConsumptionHeatPump": 130.0
+    },
+    {
+      "start": "2026-03-31T01:00:00+02:00",
+      "end": "2026-03-31T02:00:00+02:00",
+      "battery": {
+        "charge": 275.0,
+        "discharge": 210.0
+      },
+      "heatPump": 540.0,
+      "heatPumpMeterReadingPositive": 1944000.0,
+      "directConsumptionHeatPump": 120.0
+    }
+  ]
+}

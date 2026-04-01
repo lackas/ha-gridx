@@ -34,6 +34,12 @@ def _get_descriptions():
     )
 
 
+def _get_historical_descriptions():
+    from custom_components.gridx.sensor import HISTORICAL_SYSTEM_SENSOR_DESCRIPTIONS
+
+    return HISTORICAL_SYSTEM_SENSOR_DESCRIPTIONS
+
+
 def _get_appliance_name(base_name: str, index: int, total: int) -> str:
     """Replicate sensor naming logic for tests."""
     from custom_components.gridx.sensor import _appliance_device_name
@@ -467,3 +473,66 @@ class TestSensorVisibility:
         for key in ("production", "consumption", "grid", "self_consumption_rate"):
             val = desc_map[key].entity_registry_visible_default
             assert val is not False, f"{key} should be visible by default"
+
+
+class TestHistoricalSystemSensors:
+    def test_historical_descriptions_extract_expected_values(self):
+        """Historical descriptions read the expected total values."""
+        descriptions = _get_historical_descriptions()
+        desc_map = {d.key: d for d in descriptions}
+        data = {
+            "battery": {"charge": 4820.0, "discharge": 4175.0},
+            "heatPump": 9630.0,
+            "directConsumptionHeatPump": 2310.0,
+        }
+
+        assert desc_map["hist_battery_charge"].value_fn(data) == pytest.approx(4820.0)
+        assert desc_map["hist_battery_discharge"].value_fn(data) == pytest.approx(
+            4175.0
+        )
+        assert desc_map["hist_heat_pump_energy"].value_fn(data) == pytest.approx(
+            9630.0
+        )
+        assert desc_map[
+            "hist_direct_consumption_heat_pump"
+        ].value_fn(data) == pytest.approx(2310.0)
+
+    def test_historical_descriptions_disabled_by_default(self):
+        """Historical sensors must be disabled by default."""
+        descriptions = _get_historical_descriptions()
+
+        assert len(descriptions) == 4
+        for description in descriptions:
+            assert description.entity_registry_enabled_default is False
+
+    def test_build_historical_entities(self):
+        """Historical coordinator data creates four system entities per system."""
+        from unittest.mock import MagicMock
+
+        from custom_components.gridx.sensor import (
+            GridxHistoricalSystemSensor,
+            _build_historical_entities,
+        )
+
+        coordinator = MagicMock()
+        coordinator.data = {
+            "system-1": {
+                "battery": {"charge": 4820.0, "discharge": 4175.0},
+                "heatPump": 9630.0,
+                "directConsumptionHeatPump": 2310.0,
+            }
+        }
+
+        entities = _build_historical_entities(coordinator)
+
+        assert len(entities) == 4
+        assert all(
+            isinstance(entity, GridxHistoricalSystemSensor) for entity in entities
+        )
+        unique_ids = {entity._attr_unique_id for entity in entities}
+        assert unique_ids == {
+            "system-1_hist_battery_charge",
+            "system-1_hist_battery_discharge",
+            "system-1_hist_heat_pump_energy",
+            "system-1_hist_direct_consumption_heat_pump",
+        }

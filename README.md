@@ -55,6 +55,42 @@ The integration creates devices based on your system:
 
 Multiple appliances of the same type are supported (e.g., "gridX Battery" and "gridX Battery 2").
 
+## Energy Sensors (Wh) via HA Helpers
+
+The gridX live API provides **power values (W)** for battery charge/discharge and heat pump consumption. If you need cumulative **energy sensors (Wh/kWh)** — e.g. for custom dashboards or tracking daily usage — you can derive them using Home Assistant's built-in [Riemann Sum Integral helper](https://www.home-assistant.io/integrations/integration/).
+
+Add the following to your `configuration.yaml`:
+
+```yaml
+sensor:
+  - platform: integration
+    source: sensor.gridx_battery_charge
+    name: "Battery Charge Energy"
+    unit_prefix: k
+    round: 2
+    method: trapezoidal
+
+  - platform: integration
+    source: sensor.gridx_battery_discharge
+    name: "Battery Discharge Energy"
+    unit_prefix: k
+    round: 2
+    method: trapezoidal
+
+  - platform: integration
+    source: sensor.gridx_heat_pump_power
+    name: "Heat Pump Energy Consumption"
+    unit_prefix: k
+    round: 2
+    method: trapezoidal
+```
+
+> **Note:** Replace the `source` entity IDs with the actual entity IDs from your setup (visible in Settings → Devices & Services → gridX). The sensors above assume default entity naming.
+
+If you want daily/monthly totals that reset at midnight, add a [Utility Meter helper](https://www.home-assistant.io/integrations/utility_meter/) on top of each integration sensor.
+
+> **Why not built into the integration?** The gridX live API only exposes instantaneous power (W) for these values — not cumulative energy meters. Only the grid import/export (`gridMeterReadingPositive`/`gridMeterReadingNegative`) are true hardware meter readings. Historical energy data from the gridX API is planned as a future feature.
+
 ## Disclaimer
 
 This is an unofficial, community-maintained integration. It is not affiliated with, endorsed by, or supported by gridX GmbH or E.ON SE.

@@ -35,3 +35,9 @@ def live_data_minimal_fixture() -> dict:
 def live_data_multi_fixture() -> dict:
     """Multi-appliance live data API response."""
     return load_fixture("live_data_multi.json")
+
+
+@pytest.fixture
+def historical_data_fixture() -> dict:
+    """Raw historical API response."""
+    return load_fixture("historical_data.json")

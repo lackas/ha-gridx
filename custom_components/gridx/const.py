@@ -16,6 +16,7 @@ AUTH0_GRANT_TYPE: Final = "http://auth0.com/oauth/grant-type/password-realm"
 API_BASE_URL: Final = "https://api.gridx.de"
 API_GATEWAYS_URL: Final = f"{API_BASE_URL}/gateways"
 API_LIVE_URL: Final = f"{API_BASE_URL}/systems/{{}}/live"
+API_HISTORICAL_URL: Final = f"{API_BASE_URL}/systems/{{}}/historical"
 
 # Polling
 DEFAULT_SCAN_INTERVAL: Final = 60
@@ -24,6 +25,10 @@ ERROR_SCAN_INTERVAL_MAX: Final = 900
 
 # Auth cooldown
 AUTH_COOLDOWN_SECONDS: Final = 60
+
+# hass.data keys
+COORDINATOR_LIVE: Final = "live_coordinator"
+COORDINATOR_HISTORICAL: Final = "historical_coordinator"
 
 # SG Ready states (from gridX OpenAPI spec)
 SG_READY_STATES: Final = ["UNKNOWN", "OFF", "AUTO", "RECOMMEND_ON", "ON"]

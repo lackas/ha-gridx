@@ -18,6 +18,7 @@ from custom_components.gridx.api import (
 )
 from custom_components.gridx.const import (
     API_GATEWAYS_URL,
+    API_HISTORICAL_URL,
     API_LIVE_URL,
     AUTH0_TOKEN_URL,
 )
@@ -147,6 +148,55 @@ class TestGetLiveData:
                 m.get(url, payload=[])
                 with pytest.raises(GridxApiError, match="Unexpected live data payload"):
                     await api.async_get_live_data(system_id)
+
+
+class TestGetHistoricalData:
+    @pytest.mark.asyncio
+    async def test_get_historical_data_success(self):
+        historical_data = load_fixture("historical_data.json")
+        system_id = "system-id-001"
+        start = "2026-03-31T00:00:00+02:00"
+        end = "2026-03-31T15:30:00+02:00"
+        url = (
+            f"{API_HISTORICAL_URL.format(system_id)}"
+            f"?interval={start}/{end}&resolution=1h"
+        )
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.get(url, payload=historical_data)
+                result = await api.async_get_historical_data(
+                    system_id, start, end, resolution="1h"
+                )
+
+            assert result["total"]["battery"]["charge"] == pytest.approx(4820.0)
+            assert result["total"]["heatPump"] == pytest.approx(9630.0)
+
+    @pytest.mark.asyncio
+    async def test_get_historical_data_invalid_payload_raises_api_error(self):
+        system_id = "system-id-001"
+        start = "2026-03-31T00:00:00+02:00"
+        end = "2026-03-31T15:30:00+02:00"
+        url = (
+            f"{API_HISTORICAL_URL.format(system_id)}"
+            f"?interval={start}/{end}&resolution=1h"
+        )
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.get(url, payload=[])
+                with pytest.raises(
+                    GridxApiError, match="Unexpected historical data payload"
+                ):
+                    await api.async_get_historical_data(
+                        system_id, start, end, resolution="1h"
+                    )
 
 
 class TestTokenRefresh:

@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from custom_components.gridx.const import COORDINATOR_LIVE
 from custom_components.gridx.diagnostics import (
     REDACT_KEYS,
     async_get_config_entry_diagnostics,
@@ -45,7 +46,7 @@ def mock_entry(mock_coordinator):
     """Return a mock config entry with runtime_data."""
     entry = MagicMock()
     entry.entry_id = "test_entry_id"
-    entry.runtime_data = mock_coordinator
+    entry.runtime_data = {COORDINATOR_LIVE: mock_coordinator}
     entry.as_dict.return_value = {
         "entry_id": "test_entry_id",
         "domain": "gridx",

@@ -56,10 +56,23 @@ def make_api(live_data=None):
     return api
 
 
+def make_historical_api(total_data=None):
+    """Create a mock GridxApi with historical data."""
+    api = MagicMock()
+    if total_data is None:
+        total_data = {"battery": {"charge": 1200.0}, "heatPump": 3400.0}
+    api.async_get_historical_data = AsyncMock(return_value={"total": total_data})
+    return api
+
+
 # ---------------------------------------------------------------------------
 # Import coordinator here (after helpers so failures are obvious)
 # ---------------------------------------------------------------------------
-from custom_components.gridx.coordinator import GridxCoordinator  # noqa: E402
+from custom_components.gridx.coordinator import (  # noqa: E402
+    HISTORICAL_SCAN_INTERVAL,
+    GridxCoordinator,
+    GridxHistoricalCoordinator,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -226,3 +239,46 @@ async def test_coordinator_multiple_systems():
     assert result["sys-a"].consumption == 1000.0
     assert result["sys-b"].consumption == 2000.0
     assert api.async_get_live_data.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_historical_coordinator_update_success():
+    """Historical coordinator returns the total object per system."""
+    api = make_historical_api(
+        total_data={
+            "battery": {"charge": 4820.0, "discharge": 4175.0},
+            "heatPump": 9630.0,
+            "directConsumptionHeatPump": 2310.0,
+        }
+    )
+    hass = make_hass()
+    entry = make_config_entry(system_ids=["system-id-001"])
+
+    coordinator = GridxHistoricalCoordinator(hass, api, entry)
+
+    result = await coordinator._async_update_data()
+
+    assert result["system-id-001"]["battery"]["charge"] == pytest.approx(4820.0)
+    assert result["system-id-001"]["heatPump"] == pytest.approx(9630.0)
+    assert coordinator.update_interval == HISTORICAL_SCAN_INTERVAL
+    api.async_get_historical_data.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_historical_coordinator_auth_error():
+    """Historical auth errors trigger reauth like the live coordinator."""
+    from homeassistant.helpers.update_coordinator import UpdateFailed
+
+    api = make_historical_api()
+    api.async_get_historical_data = AsyncMock(
+        side_effect=GridxAuthenticationError("bad token")
+    )
+    hass = make_hass()
+    entry = make_config_entry()
+
+    coordinator = GridxHistoricalCoordinator(hass, api, entry)
+
+    with pytest.raises(UpdateFailed, match="Authentication failed"):
+        await coordinator._async_update_data()
+
+    entry.async_start_reauth.assert_called_once_with(hass)

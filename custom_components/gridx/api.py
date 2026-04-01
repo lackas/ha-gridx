@@ -10,6 +10,7 @@ import aiohttp
 
 from .const import (
     API_GATEWAYS_URL,
+    API_HISTORICAL_URL,
     API_LIVE_URL,
     AUTH0_AUDIENCE,
     AUTH0_CLIENT_ID,
@@ -204,3 +205,20 @@ class GridxApi:
             return parse_live_data(data)
         except (AttributeError, TypeError, ValueError) as err:
             raise GridxApiError("Unexpected live data payload") from err
+
+    async def async_get_historical_data(
+        self,
+        system_id: str,
+        start: str,
+        end: str,
+        resolution: str = "1d",
+    ) -> dict[str, Any]:
+        """Return raw historical data for the given system ID."""
+        url = (
+            f"{API_HISTORICAL_URL.format(system_id)}"
+            f"?interval={start}/{end}&resolution={resolution}"
+        )
+        data = await self._get(url)
+        if not isinstance(data, dict):
+            raise GridxApiError("Unexpected historical data payload")
+        return data

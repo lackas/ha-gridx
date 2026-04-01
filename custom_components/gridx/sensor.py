@@ -29,8 +29,8 @@ from homeassistant.components.sensor import RestoreSensor
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, SG_READY_STATES
-from .coordinator import GridxCoordinator
+from .const import COORDINATOR_HISTORICAL, COORDINATOR_LIVE, DOMAIN, SG_READY_STATES
+from .coordinator import GridxCoordinator, GridxHistoricalCoordinator
 from .models import GridxSystemData
 
 
@@ -51,6 +51,13 @@ class GridxApplianceSensorDescription(SensorEntityDescription):
     """Describes an appliance-level gridX sensor."""
 
     value_fn: Callable[[Any], StateType] = lambda _: None
+
+
+@dataclass(frozen=True)
+class GridxHistoricalSystemSensorDescription(SensorEntityDescription):
+    """Describes a historical system-level gridX sensor."""
+
+    value_fn: Callable[[dict[str, Any]], StateType] = lambda _: None
 
 
 # ---------------------------------------------------------------------------
@@ -214,6 +221,51 @@ SYSTEM_SENSOR_DESCRIPTIONS: tuple[GridxSystemSensorDescription, ...] = (
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=0,
         value_fn=lambda d: d.grid_meter_reading_positive / 3600,
+    ),
+)
+
+HISTORICAL_SYSTEM_SENSOR_DESCRIPTIONS: tuple[
+    GridxHistoricalSystemSensorDescription, ...
+] = (
+    GridxHistoricalSystemSensorDescription(
+        key="hist_battery_charge",
+        translation_key="hist_battery_charge",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False,
+        value_fn=lambda data: _nested_float(data, "battery", "charge"),
+    ),
+    GridxHistoricalSystemSensorDescription(
+        key="hist_battery_discharge",
+        translation_key="hist_battery_discharge",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False,
+        value_fn=lambda data: _nested_float(data, "battery", "discharge"),
+    ),
+    GridxHistoricalSystemSensorDescription(
+        key="hist_heat_pump_energy",
+        translation_key="hist_heat_pump_energy",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False,
+        value_fn=lambda data: _nested_float(data, "heatPump"),
+    ),
+    GridxHistoricalSystemSensorDescription(
+        key="hist_direct_consumption_heat_pump",
+        translation_key="hist_direct_consumption_heat_pump",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False,
+        value_fn=lambda data: _nested_float(data, "directConsumptionHeatPump"),
     ),
 )
 
@@ -413,6 +465,20 @@ def _appliance_device_name(base_name: str, index: int, total: int) -> str:
     if total == 1 or index == 0:
         return base_name
     return f"{base_name} {index + 1}"
+
+
+def _nested_float(data: dict[str, Any], *keys: str) -> float:
+    """Read a nested numeric value from a dictionary."""
+    current: Any = data
+    for key in keys:
+        if not isinstance(current, dict):
+            return 0.0
+        current = current.get(key)
+
+    try:
+        return float(current)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -633,6 +699,42 @@ class GridxApplianceEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSen
         )
 
 
+class GridxHistoricalSystemSensor(
+    CoordinatorEntity[GridxHistoricalCoordinator], SensorEntity
+):
+    """A sensor representing a historical system-level gridX metric."""
+
+    _attr_has_entity_name = True
+    entity_description: GridxHistoricalSystemSensorDescription
+
+    def __init__(
+        self,
+        coordinator: GridxHistoricalCoordinator,
+        system_id: str,
+        description: GridxHistoricalSystemSensorDescription,
+    ) -> None:
+        super().__init__(coordinator)
+        self.entity_description = description
+        self._system_id = system_id
+        self._attr_unique_id = f"{system_id}_{description.key}"
+
+    @property
+    def native_value(self) -> StateType:
+        data = self.coordinator.data.get(self._system_id)
+        if data is None:
+            return None
+        return self.entity_description.value_fn(data)
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._system_id)},
+            name="gridX",
+            manufacturer="gridX",
+            model="Gateway",
+        )
+
+
 # ---------------------------------------------------------------------------
 # Entity builder (extracted for testability)
 # ---------------------------------------------------------------------------
@@ -738,6 +840,21 @@ def _build_entities(coordinator: GridxCoordinator) -> list:
     return entities
 
 
+def _build_historical_entities(
+    coordinator: GridxHistoricalCoordinator,
+) -> list[GridxHistoricalSystemSensor]:
+    """Build all historical sensor entities from coordinator data."""
+    entities: list[GridxHistoricalSystemSensor] = []
+
+    for system_id in coordinator.data:
+        for description in HISTORICAL_SYSTEM_SENSOR_DESCRIPTIONS:
+            entities.append(
+                GridxHistoricalSystemSensor(coordinator, system_id, description)
+            )
+
+    return entities
+
+
 # ---------------------------------------------------------------------------
 # Platform setup
 # ---------------------------------------------------------------------------
@@ -749,4 +866,11 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up gridX sensor entities from a config entry."""
-    async_add_entities(_build_entities(entry.runtime_data))
+    live_coordinator: GridxCoordinator = entry.runtime_data[COORDINATOR_LIVE]
+    historical_coordinator: GridxHistoricalCoordinator = entry.runtime_data[
+        COORDINATOR_HISTORICAL
+    ]
+    async_add_entities(
+        _build_entities(live_coordinator)
+        + _build_historical_entities(historical_coordinator)
+    )
