@@ -34,8 +34,14 @@
       "battery_charge": {
         "name": "Charging power"
       },
+      "battery_charge_energy": {
+        "name": "Charge energy"
+      },
       "battery_discharge": {
         "name": "Discharging power"
+      },
+      "battery_discharge_energy": {
+        "name": "Discharge energy"
       },
       "battery_nominal_capacity": {
         "name": "Nominal capacity"

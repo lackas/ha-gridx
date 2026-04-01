@@ -837,6 +837,36 @@ def _build_entities(coordinator: GridxCoordinator) -> list:
                 )
             )
 
+        # Energy accumulator sensors for batteries (charge / discharge)
+        for index, bat in enumerate(system_data.batteries):
+            device_name = _appliance_device_name(
+                "gridX Battery", index, len(system_data.batteries)
+            )
+            entities.append(
+                GridxApplianceEnergySensor(
+                    coordinator=coordinator,
+                    system_id=system_id,
+                    appliance_id=f"{bat.appliance_id}_charge",
+                    appliance_type="batteries",
+                    device_name=device_name,
+                    key="battery_charge_energy",
+                    translation_key="battery_charge_energy",
+                    power_fn=lambda b: b.charge,
+                )
+            )
+            entities.append(
+                GridxApplianceEnergySensor(
+                    coordinator=coordinator,
+                    system_id=system_id,
+                    appliance_id=f"{bat.appliance_id}_discharge",
+                    appliance_type="batteries",
+                    device_name=device_name,
+                    key="battery_discharge_energy",
+                    translation_key="battery_discharge_energy",
+                    power_fn=lambda b: b.discharge,
+                )
+            )
+
     return entities
 
 

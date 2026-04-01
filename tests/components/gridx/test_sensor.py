@@ -403,8 +403,8 @@ class TestNoAppliances:
         assert system_count == 17
         # 7 battery + 2 heat pump = 9 appliance sensors
         assert appliance_count == 9
-        # 1 heat pump energy sensor
-        assert energy_count == 1
+        # 1 heat pump energy + 2 battery energy (charge + discharge) = 3
+        assert energy_count == 3
 
 
 # ---------------------------------------------------------------------------
