@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.13] - 2026-04-01
+
+### Added
+
+- Built-in energy accumulator sensor for heaters: **Heater energy** (kWh)
+
 ## [1.0.12] - 2026-04-01
 
 ### Added

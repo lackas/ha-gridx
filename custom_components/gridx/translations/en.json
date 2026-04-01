@@ -128,6 +128,9 @@
           "on": "On"
         }
       },
+      "heater_energy": {
+        "name": "Energy"
+      },
       "heater_power": {
         "name": "Power"
       },
