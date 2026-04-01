@@ -490,12 +490,10 @@ class TestHistoricalSystemSensors:
         assert desc_map["hist_battery_discharge"].value_fn(data) == pytest.approx(
             4175.0
         )
-        assert desc_map["hist_heat_pump_energy"].value_fn(data) == pytest.approx(
-            9630.0
-        )
-        assert desc_map[
-            "hist_direct_consumption_heat_pump"
-        ].value_fn(data) == pytest.approx(2310.0)
+        assert desc_map["hist_heat_pump_energy"].value_fn(data) == pytest.approx(9630.0)
+        assert desc_map["hist_direct_consumption_heat_pump"].value_fn(
+            data
+        ) == pytest.approx(2310.0)
 
     def test_historical_descriptions_disabled_by_default(self):
         """Historical sensors must be disabled by default."""
