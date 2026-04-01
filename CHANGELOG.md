@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.11] - 2026-04-01
+
+### Added
+
+- Historical energy sensors (disabled by default): battery charge today, battery discharge today, heat pump energy today, direct consumption heat pump today — all in Wh, sourced from the gridX `/historical` API endpoint and updated hourly. Enable them in Settings → Devices & Services → gridX.
+
 ## [1.0.10] - 2026-03-25
 
 ### Fixed

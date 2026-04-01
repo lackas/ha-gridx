@@ -1,12 +1,14 @@
 {
   "domain": "gridx",
   "name": "gridX Energy Management",
-  "codeowners": ["@lackas"],
+  "codeowners": [
+    "@lackas"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/lackas/ha-gridx",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/lackas/ha-gridx/issues",
   "requirements": [],
-  "version": "1.0.10"
+  "version": "1.0.11"
 }
