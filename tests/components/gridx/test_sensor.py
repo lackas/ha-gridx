@@ -533,3 +533,322 @@ class TestHistoricalSystemSensors:
             "system-1_hist_heat_pump_energy",
             "system-1_hist_direct_consumption_heat_pump",
         }
+
+
+# ---------------------------------------------------------------------------
+# Energy accumulator sensor tests (Riemann integration)
+# ---------------------------------------------------------------------------
+
+
+class TestSystemEnergySensorAccumulation:
+    """Test GridxSystemEnergySensor accumulation and restore logic."""
+
+    def _make_sensor(self, power_fn=None):
+        from unittest.mock import MagicMock
+
+        from custom_components.gridx.sensor import GridxSystemEnergySensor
+
+        coordinator = MagicMock()
+        coordinator.data = {}
+        sensor = GridxSystemEnergySensor(
+            coordinator=coordinator,
+            system_id="sys-1",
+            key="test_energy",
+            translation_key="test_energy",
+            power_fn=power_fn or (lambda d: d.production),
+        )
+        # Prevent super()._handle_coordinator_update() from calling HA internals
+        sensor.hass = MagicMock()
+        return sensor
+
+    def test_initial_value_is_zero(self):
+        sensor = self._make_sensor()
+        assert sensor.native_value == 0.0
+
+    def test_first_update_sets_timestamp_no_accumulation(self):
+        """First update only sets the timestamp, no energy accumulated."""
+        from unittest.mock import MagicMock, patch
+
+        sensor = self._make_sensor()
+        sensor.coordinator.data = {"sys-1": MagicMock(production=1000.0)}
+
+        with patch.object(sensor, "async_write_ha_state"):
+            sensor._handle_coordinator_update()
+
+        assert sensor.native_value == 0.0
+        assert sensor._last_update is not None
+
+    def test_accumulates_energy_over_time(self):
+        """1000W for 1 hour = 1.0 kWh."""
+        from datetime import UTC, datetime, timedelta
+        from unittest.mock import MagicMock
+
+        sensor = self._make_sensor()
+        data = MagicMock(production=1000.0)
+        sensor.coordinator.data = {"sys-1": data}
+
+        t0 = datetime(2026, 4, 12, 10, 0, 0, tzinfo=UTC)
+        t1 = t0 + timedelta(hours=1)
+
+        sensor._last_update = t0
+        sensor._accumulated = 0.0
+
+        # Manually simulate what _handle_coordinator_update does
+        delta_h = (t1 - t0).total_seconds() / 3600
+        sensor._accumulated += (abs(1000.0) / 1000) * delta_h
+        sensor._last_update = t1
+
+        assert sensor.native_value == pytest.approx(1.0)
+
+    def test_accumulates_small_intervals(self):
+        """500W for 30 minutes = 0.25 kWh."""
+        from datetime import UTC, datetime, timedelta
+        from unittest.mock import MagicMock
+
+        sensor = self._make_sensor()
+        sensor.coordinator.data = {"sys-1": MagicMock(production=500.0)}
+
+        t0 = datetime(2026, 4, 12, 10, 0, 0, tzinfo=UTC)
+        sensor._last_update = t0
+        sensor._accumulated = 0.0
+
+        delta_h = timedelta(minutes=30).total_seconds() / 3600
+        sensor._accumulated += (abs(500.0) / 1000) * delta_h
+
+        assert sensor.native_value == pytest.approx(0.25)
+
+    def test_no_data_does_not_crash(self):
+        """If system_id not in coordinator data, sensor doesn't crash."""
+        from unittest.mock import patch
+
+        sensor = self._make_sensor()
+        sensor.coordinator.data = {}  # no data for sys-1
+        with patch.object(sensor, "async_write_ha_state"):
+            sensor._handle_coordinator_update()
+        assert sensor.native_value == 0.0
+
+    def test_none_power_does_not_accumulate(self):
+        """If power_fn returns None, no energy is accumulated."""
+        from datetime import UTC, datetime
+        from unittest.mock import MagicMock, patch
+
+        sensor = self._make_sensor(power_fn=lambda d: None)
+        sensor.coordinator.data = {"sys-1": MagicMock()}
+        sensor._last_update = datetime(2026, 4, 12, 10, 0, 0, tzinfo=UTC)
+        sensor._accumulated = 5.0
+
+        with patch.object(sensor, "async_write_ha_state"):
+            sensor._handle_coordinator_update()
+        assert sensor.native_value == pytest.approx(5.0)
+
+    def test_device_info(self):
+        sensor = self._make_sensor()
+        info = sensor.device_info
+        assert ("gridx", "sys-1") in info["identifiers"]
+
+    def test_unique_id(self):
+        sensor = self._make_sensor()
+        assert sensor._attr_unique_id == "sys-1_test_energy"
+
+
+class TestApplianceEnergySensorAccumulation:
+    """Test GridxApplianceEnergySensor accumulation and restore logic."""
+
+    def _make_sensor(self, appliance_type="heat_pumps", appliance_id="hp-1"):
+        from unittest.mock import MagicMock
+
+        from custom_components.gridx.sensor import GridxApplianceEnergySensor
+
+        coordinator = MagicMock()
+        coordinator.data = {}
+        sensor = GridxApplianceEnergySensor(
+            coordinator=coordinator,
+            system_id="sys-1",
+            appliance_id=appliance_id,
+            appliance_type=appliance_type,
+            device_name="Test Appliance",
+            key="test_energy",
+            translation_key="test_energy",
+            power_fn=lambda h: h.power,
+        )
+        sensor.hass = MagicMock()
+        return sensor
+
+    def test_initial_value_is_zero(self):
+        sensor = self._make_sensor()
+        assert sensor.native_value == 0.0
+
+    def test_accumulates_from_matching_appliance(self):
+        """Finds correct appliance by ID and accumulates energy."""
+        from datetime import UTC, datetime, timedelta
+
+        sensor = self._make_sensor()
+        hp = GridxHeatPump(appliance_id="hp-1", power=2000.0, sg_ready_state="AUTO")
+        data = GridxSystemData(heat_pumps=[hp])
+        sensor.coordinator.data = {"sys-1": data}
+
+        t0 = datetime(2026, 4, 12, 10, 0, 0, tzinfo=UTC)
+        t1 = t0 + timedelta(hours=1)
+
+        # First call: sets timestamp
+        sensor._last_update = t0
+        sensor._accumulated = 0.0
+
+        # Simulate second call
+        delta_h = (t1 - t0).total_seconds() / 3600
+        sensor._accumulated += (2000.0 / 1000) * delta_h
+
+        assert sensor.native_value == pytest.approx(2.0)
+
+    def test_no_matching_appliance_does_not_accumulate(self):
+        """If appliance_id doesn't match, no energy accumulated."""
+        from datetime import UTC, datetime
+        from unittest.mock import patch
+
+        sensor = self._make_sensor(appliance_id="hp-999")
+        hp = GridxHeatPump(appliance_id="hp-1", power=2000.0, sg_ready_state="AUTO")
+        data = GridxSystemData(heat_pumps=[hp])
+        sensor.coordinator.data = {"sys-1": data}
+        sensor._last_update = datetime(2026, 4, 12, 10, 0, 0, tzinfo=UTC)
+        sensor._accumulated = 5.0
+
+        with patch.object(sensor, "async_write_ha_state"):
+            sensor._handle_coordinator_update()
+        assert sensor.native_value == pytest.approx(5.0)
+
+    def test_heater_energy_sensor_created(self):
+        """Each heater gets an energy accumulator sensor."""
+        from unittest.mock import MagicMock
+
+        from custom_components.gridx.sensor import (
+            GridxApplianceEnergySensor,
+            _build_entities,
+        )
+
+        data = GridxSystemData(
+            heaters=[
+                GridxHeater(appliance_id="h-1", power=3000.0, temperature=65.0),
+            ],
+        )
+        coordinator = MagicMock()
+        coordinator.data = {"sys-1": data}
+
+        entities = _build_entities(coordinator)
+        heater_energy = [
+            e
+            for e in entities
+            if isinstance(e, GridxApplianceEnergySensor)
+            and e._attr_unique_id == "h-1_heater_energy"
+        ]
+        assert len(heater_energy) == 1
+
+    def test_device_info_via_device(self):
+        sensor = self._make_sensor()
+        info = sensor.device_info
+        assert ("gridx", "hp-1") in info["identifiers"]
+        assert info["via_device"] == ("gridx", "sys-1")
+
+    def test_unique_id(self):
+        sensor = self._make_sensor()
+        assert sensor._attr_unique_id == "hp-1_test_energy"
+
+
+class TestEnergyRestoreState:
+    """Test that energy sensors restore accumulated value after restart."""
+
+    @pytest.mark.asyncio
+    async def test_system_energy_restores_from_last_state(self):
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from custom_components.gridx.sensor import GridxSystemEnergySensor
+
+        coordinator = MagicMock()
+        coordinator.data = {}
+
+        sensor = GridxSystemEnergySensor(
+            coordinator=coordinator,
+            system_id="sys-1",
+            key="test_energy",
+            translation_key="test_energy",
+            power_fn=lambda d: d.production,
+        )
+
+        mock_state = MagicMock()
+        mock_state.native_value = 42.5
+
+        with patch.object(
+            sensor, "async_get_last_sensor_data", new_callable=AsyncMock
+        ) as mock_restore:
+            mock_restore.return_value = mock_state
+            # Mock super().async_added_to_hass() to avoid HA internals
+            with patch(
+                "custom_components.gridx.sensor.CoordinatorEntity.async_added_to_hass",
+                new_callable=AsyncMock,
+            ):
+                await sensor.async_added_to_hass()
+
+        assert sensor._accumulated == pytest.approx(42.5)
+
+    @pytest.mark.asyncio
+    async def test_system_energy_no_prior_state(self):
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from custom_components.gridx.sensor import GridxSystemEnergySensor
+
+        coordinator = MagicMock()
+        coordinator.data = {}
+
+        sensor = GridxSystemEnergySensor(
+            coordinator=coordinator,
+            system_id="sys-1",
+            key="test_energy",
+            translation_key="test_energy",
+            power_fn=lambda d: d.production,
+        )
+
+        with patch.object(
+            sensor, "async_get_last_sensor_data", new_callable=AsyncMock
+        ) as mock_restore:
+            mock_restore.return_value = None
+            with patch(
+                "custom_components.gridx.sensor.CoordinatorEntity.async_added_to_hass",
+                new_callable=AsyncMock,
+            ):
+                await sensor.async_added_to_hass()
+
+        assert sensor._accumulated == 0.0
+
+    @pytest.mark.asyncio
+    async def test_appliance_energy_restores_from_last_state(self):
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from custom_components.gridx.sensor import GridxApplianceEnergySensor
+
+        coordinator = MagicMock()
+        coordinator.data = {}
+
+        sensor = GridxApplianceEnergySensor(
+            coordinator=coordinator,
+            system_id="sys-1",
+            appliance_id="hp-1",
+            appliance_type="heat_pumps",
+            device_name="Heat Pump",
+            key="heat_pump_energy",
+            translation_key="heat_pump_energy",
+            power_fn=lambda h: h.power,
+        )
+
+        mock_state = MagicMock()
+        mock_state.native_value = 99.123
+
+        with patch.object(
+            sensor, "async_get_last_sensor_data", new_callable=AsyncMock
+        ) as mock_restore:
+            mock_restore.return_value = mock_state
+            with patch(
+                "custom_components.gridx.sensor.CoordinatorEntity.async_added_to_hass",
+                new_callable=AsyncMock,
+            ):
+                await sensor.async_added_to_hass()
+
+        assert sensor._accumulated == pytest.approx(99.123)
