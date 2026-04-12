@@ -13,7 +13,6 @@ from custom_components.gridx.api import (
 )
 from custom_components.gridx.config_flow import GridxConfigFlow
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

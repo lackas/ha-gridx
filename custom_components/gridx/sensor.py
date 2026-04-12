@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from homeassistant.components.sensor import (
+    RestoreSensor,
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
@@ -25,14 +26,12 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.components.sensor import RestoreSensor
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import COORDINATOR_HISTORICAL, COORDINATOR_LIVE, DOMAIN, SG_READY_STATES
 from .coordinator import GridxCoordinator, GridxHistoricalCoordinator
 from .models import GridxSystemData
-
 
 # ---------------------------------------------------------------------------
 # Entity description dataclasses
@@ -591,9 +590,10 @@ class GridxSystemEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSensor
     async def async_added_to_hass(self) -> None:
         """Restore accumulated energy after restart."""
         await super().async_added_to_hass()
-        if (last_state := await self.async_get_last_sensor_data()) is not None:
-            if last_state.native_value is not None:
-                self._accumulated = float(last_state.native_value)
+        if (
+            last_state := await self.async_get_last_sensor_data()
+        ) is not None and last_state.native_value is not None:
+            self._accumulated = float(last_state.native_value)
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -604,7 +604,7 @@ class GridxSystemEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSensor
             return
 
         power_w = self._power_fn(data)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if power_w is not None and self._last_update is not None:
             delta_h = (now - self._last_update).total_seconds() / 3600
             self._accumulated += (abs(power_w) / 1000) * delta_h
@@ -659,9 +659,10 @@ class GridxApplianceEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSen
     async def async_added_to_hass(self) -> None:
         """Restore accumulated energy after restart."""
         await super().async_added_to_hass()
-        if (last_state := await self.async_get_last_sensor_data()) is not None:
-            if last_state.native_value is not None:
-                self._accumulated = float(last_state.native_value)
+        if (
+            last_state := await self.async_get_last_sensor_data()
+        ) is not None and last_state.native_value is not None:
+            self._accumulated = float(last_state.native_value)
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -678,7 +679,7 @@ class GridxApplianceEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSen
                 power_w = self._power_fn(appliance)
                 break
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if power_w is not None and self._last_update is not None:
             delta_h = (now - self._last_update).total_seconds() / 3600
             self._accumulated += (power_w / 1000) * delta_h

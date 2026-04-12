@@ -1,7 +1,7 @@
 """Tests for gridX data models."""
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -48,9 +48,7 @@ class TestParseFullResponse:
         assert result.grid_meter_reading_positive == 1428840000
 
         # measured_at parsed as datetime
-        assert result.measured_at == datetime(
-            2026, 3, 16, 19, 27, 28, tzinfo=timezone.utc
-        )
+        assert result.measured_at == datetime(2026, 3, 16, 19, 27, 28, tzinfo=UTC)
 
         # Aggregate battery
         assert result.battery_power == pytest.approx(2285.49)
@@ -107,9 +105,7 @@ class TestParseMinimalResponse:
         assert result.battery_power == pytest.approx(0.0)
         assert result.battery_state_of_charge == pytest.approx(0.0)
 
-        assert result.measured_at == datetime(
-            2026, 3, 16, 12, 0, 0, tzinfo=timezone.utc
-        )
+        assert result.measured_at == datetime(2026, 3, 16, 12, 0, 0, tzinfo=UTC)
 
 
 class TestParseMultiApplianceResponse:

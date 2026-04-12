@@ -10,7 +10,6 @@ from custom_components.gridx.models import (
     GridxSystemData,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers — imported from sensor module after it exists
 # ---------------------------------------------------------------------------
@@ -20,8 +19,8 @@ def _get_descriptions():
     from custom_components.gridx.sensor import (
         BATTERY_SENSOR_DESCRIPTIONS,
         EV_CHARGER_SENSOR_DESCRIPTIONS,
-        HEATER_SENSOR_DESCRIPTIONS,
         HEAT_PUMP_SENSOR_DESCRIPTIONS,
+        HEATER_SENSOR_DESCRIPTIONS,
         SYSTEM_SENSOR_DESCRIPTIONS,
     )
 
@@ -302,7 +301,7 @@ class TestApplianceNaming:
 
 class TestDiagnosticEntities:
     def test_diagnostic_entities_have_category(self):
-        """Battery capacity and nominal_capacity must have entity_category=DIAGNOSTIC."""
+        """Battery capacity and nominal_capacity have DIAGNOSTIC category."""
         from homeassistant.const import EntityCategory
 
         (_, BATTERY_SENSOR_DESCRIPTIONS, _, _, _) = _get_descriptions()
@@ -353,8 +352,8 @@ class TestNoAppliances:
         entities = _build_entities(coordinator)
 
         from custom_components.gridx.sensor import (
-            GridxSystemSensor,
             GridxSystemEnergySensor,
+            GridxSystemSensor,
         )
 
         system_entities = [

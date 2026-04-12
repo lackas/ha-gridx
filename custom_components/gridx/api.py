@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import time
 from typing import Any
 
@@ -88,7 +87,7 @@ class GridxApi:
                     f"Authentication failed: HTTP {err.status}"
                 ) from err
             raise GridxApiError(f"Auth API error: {err}") from err
-        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+        except (TimeoutError, aiohttp.ClientError) as err:
             raise GridxConnectionError(f"Connection error during auth: {err}") from err
 
         expires_in = data.get("expires_in", 3600)
@@ -124,7 +123,7 @@ class GridxApi:
                     f"Token refresh failed: HTTP {err.status}"
                 ) from err
             raise GridxApiError(f"Token refresh API error: {err}") from err
-        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+        except (TimeoutError, aiohttp.ClientError) as err:
             raise GridxConnectionError(
                 f"Connection error during token refresh: {err}"
             ) from err
@@ -186,7 +185,7 @@ class GridxApi:
             if err.status >= 500:
                 raise GridxApiError(f"Server error: HTTP {err.status}") from err
             raise GridxApiError(f"API error: {err}") from err
-        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+        except (TimeoutError, aiohttp.ClientError) as err:
             raise GridxConnectionError(f"Connection error: {err}") from err
 
     async def async_get_gateways(self) -> list[str]:

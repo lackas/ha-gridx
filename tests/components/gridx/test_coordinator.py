@@ -74,7 +74,6 @@ from custom_components.gridx.coordinator import (  # noqa: E402
     GridxHistoricalCoordinator,
 )
 
-
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
