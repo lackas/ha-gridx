@@ -97,8 +97,8 @@ class GridxHistoricalCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]
             for system_id in self.config_entry.data["system_ids"]:
                 data = await self.api.async_get_historical_data(
                     system_id,
-                    start_of_day.isoformat(),
-                    now.replace(microsecond=0).isoformat(),
+                    start_of_day.astimezone(dt_util.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    now.astimezone(dt_util.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
                     resolution="1h",
                 )
                 total = data.get("total")
