@@ -644,10 +644,12 @@ class GridxApplianceEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSen
         key: str,
         translation_key: str,
         power_fn: Callable[[Any], float],
+        lookup_appliance_id: str | None = None,
     ) -> None:
         super().__init__(coordinator)
         self._system_id = system_id
         self._appliance_id = appliance_id
+        self._lookup_appliance_id = lookup_appliance_id or appliance_id
         self._appliance_type = appliance_type
         self._device_name = device_name
         self._power_fn = power_fn
@@ -675,7 +677,7 @@ class GridxApplianceEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSen
         appliances: list[Any] = getattr(data, self._appliance_type, [])
         power_w: float | None = None
         for appliance in appliances:
-            if appliance.appliance_id == self._appliance_id:
+            if appliance.appliance_id == self._lookup_appliance_id:
                 power_w = self._power_fn(appliance)
                 break
 
@@ -694,7 +696,7 @@ class GridxApplianceEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSen
     @property
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
-            identifiers={(DOMAIN, self._appliance_id)},
+            identifiers={(DOMAIN, self._lookup_appliance_id)},
             name=self._device_name,
             via_device=(DOMAIN, self._system_id),
         )
@@ -871,6 +873,7 @@ def _build_entities(coordinator: GridxCoordinator) -> list:
                     key="battery_charge_energy",
                     translation_key="battery_charge_energy",
                     power_fn=lambda b: b.charge,
+                    lookup_appliance_id=bat.appliance_id,
                 )
             )
             entities.append(
@@ -883,6 +886,7 @@ def _build_entities(coordinator: GridxCoordinator) -> list:
                     key="battery_discharge_energy",
                     translation_key="battery_discharge_energy",
                     power_fn=lambda b: b.discharge,
+                    lookup_appliance_id=bat.appliance_id,
                 )
             )
 
