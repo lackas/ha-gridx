@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Now available directly in HACS default — no custom repository setup needed. Just search "gridX Energy Management" in HACS to install.
+
+## [1.0.14] - 2026-04-20
+
+### Fixed
+
+- Battery charge/discharge energy sensors stuck at 0 kWh
+- Battery energy sensors no longer appear as separate devices — they now live under the existing Battery device
+
 ## [1.0.13] - 2026-04-01
 
 ### Added

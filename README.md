@@ -18,11 +18,9 @@ Home Assistant integration for gridX-based energy management systems.
 ### HACS (recommended)
 
 1. Open HACS in Home Assistant
-2. Go to Integrations
-3. Click the three dots menu → Custom repositories
-4. Add `lackas/ha-gridx` with category "Integration"
-5. Install "gridX Energy Management"
-6. Restart Home Assistant
+2. Search for "gridX Energy Management"
+3. Click "Download"
+4. Restart Home Assistant
 
 ### Manual
 

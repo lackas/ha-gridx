@@ -6,7 +6,7 @@ ha-gridx is a HACS-compatible Home Assistant integration for gridX-based energy 
 
 - **Design spec**: `docs/specs/2026-03-16-ha-gridx-design.md`
 - **Domain**: `gridx`
-- **Distribution**: HACS custom repository
+- **Distribution**: HACS default (merged 2026-05-15 via hacs/default#6353)
 
 ## Architecture
 
