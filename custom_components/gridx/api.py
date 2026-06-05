@@ -170,17 +170,22 @@ class GridxApi:
             "client_id": AUTH0_CLIENT_ID,
         }
 
-        async def _do_request() -> dict[str, Any]:
+        # NOTE: refresh-token grants are NOT wrapped with _retry_transient.
+        # Auth0 rotates refresh tokens by default; if the server consumed
+        # the token but our TCP read timed out, replaying the same refresh
+        # token on retry can trigger refresh-token-reuse detection and
+        # invalidate the entire token family. Instead, on transient failure
+        # we let GridxConnectionError bubble up — _ensure_token() catches it
+        # and falls back to a full password re-auth (which IS retried,
+        # because it's idempotent).
+        try:
             async with self._session.post(AUTH0_TOKEN_URL, json=payload) as resp:
                 if resp.status in (401, 403):
                     raise GridxAuthenticationError(
                         f"Token refresh failed: HTTP {resp.status}"
                     )
                 resp.raise_for_status()
-                return await resp.json()
-
-        try:
-            data = await _retry_transient(_do_request, op_name="refresh")
+                data = await resp.json()
         except aiohttp.ClientResponseError as err:
             if err.status in (401, 403):
                 raise GridxAuthenticationError(

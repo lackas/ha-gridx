@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file.
 
   Background: `gridx.eu.auth0.com` resolves via a 3-level CNAME chain (Auth0 → auth0edge → Cloudflare CDN) with TTLs as short as 2 seconds on intermediate hops, making it noticeably more brittle to DNS hiccups than direct-A-record cloud APIs. Brief retries absorb most transient failures.
 
+  Refresh-token grants are intentionally NOT wrapped in this retry — Auth0 rotates refresh tokens by default, and replaying a refresh token that was consumed by the server (but the response was lost in transit) can trigger refresh-token-reuse detection and invalidate the entire token family. On transient refresh failures, the integration falls back to a full password re-auth (which IS retried, because it's idempotent).
+
 ## [1.0.14] - 2026-04-20
 
 ### Fixed

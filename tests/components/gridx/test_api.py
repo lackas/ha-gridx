@@ -436,3 +436,41 @@ class TestTransientRetry:
                 result = await api.async_get_live_data(system_id)
 
             assert isinstance(result, GridxSystemData)
+
+    @pytest.mark.asyncio
+    async def test_refresh_token_not_retried_falls_back_to_full_auth(self, no_sleep):
+        """Refresh-token must NOT retry — Auth0 rotation would treat the replay
+        as token-reuse and invalidate the family. On any failure, _ensure_token
+        falls back to a full password re-auth (which IS retried)."""
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            # Plant an expiring token so _ensure_token triggers refresh
+            api._token = {
+                "access_token": "old",
+                "id_token": "old-id",
+                "refresh_token": "old-refresh",
+                "expires_at": time.monotonic() - 1,  # already expired
+            }
+            api._last_auth_attempt = time.monotonic() - 999  # bypass cooldown
+
+            live_data = load_fixture("live_data.json")
+            system_id = "system-id-001"
+            url = API_LIVE_URL.format(system_id)
+
+            with aioresponses() as m:
+                # Single refresh attempt (NO retry expected) → conn error
+                m.post(
+                    AUTH0_TOKEN_URL,
+                    exception=aiohttp.ClientConnectionError("dns timeout"),
+                )
+                # Fallback path: full password auth (retry IS allowed here,
+                # but provide one success — no extra attempts needed)
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.get(url, payload=live_data)
+
+                result = await api.async_get_live_data(system_id)
+
+            assert isinstance(result, GridxSystemData)
+            # Token was replaced — id_token from the fresh auth, not old
+            assert api._token["id_token"] == "id-token-xyz"
