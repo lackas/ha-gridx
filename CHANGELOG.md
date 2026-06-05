@@ -8,6 +8,14 @@ All notable changes to this project will be documented in this file.
 
 - Now available directly in HACS default — no custom repository setup needed. Just search "gridX Energy Management" in HACS to install.
 
+## [1.0.15] - 2026-06-05
+
+### Fixed
+
+- Transient DNS / connection timeouts to `gridx.eu.auth0.com` and `api.gridx.de` no longer immediately fail the coordinator update. The API client now retries up to 3 times with exponential backoff (1s, 2s, 4s) on `TimeoutError` and `aiohttp.ClientConnectionError` before bubbling up as `GridxConnectionError`. HTTP-level errors (4xx, 5xx) are still raised immediately without retry.
+
+  Background: `gridx.eu.auth0.com` resolves via a 3-level CNAME chain (Auth0 → auth0edge → Cloudflare CDN) with TTLs as short as 2 seconds on intermediate hops, making it noticeably more brittle to DNS hiccups than direct-A-record cloud APIs. Brief retries absorb most transient failures.
+
 ## [1.0.14] - 2026-04-20
 
 ### Fixed

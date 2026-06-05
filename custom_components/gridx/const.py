@@ -26,6 +26,15 @@ ERROR_SCAN_INTERVAL_MAX: Final = 900
 # Auth cooldown
 AUTH_COOLDOWN_SECONDS: Final = 60
 
+# Transient connection retries (DNS timeout, connection refused, etc.)
+# Auth0 hostnames have CNAME chains (gridx.eu.auth0.com → pivot.prod.auth0edge.com
+# → cdn.cloudflare.net) with 2s TTLs on intermediate hops, making DNS lookups
+# more brittle than for single A-record hosts. Retry transient connection
+# errors with exponential backoff before giving up to the coordinator.
+# HTTP-level errors (4xx, 5xx) are NOT retried here.
+CONNECTION_RETRIES: Final = 3
+CONNECTION_RETRY_DELAY: Final = 1.0  # seconds, doubles each retry
+
 # hass.data keys
 COORDINATOR_LIVE: Final = "live_coordinator"
 COORDINATOR_HISTORICAL: Final = "historical_coordinator"

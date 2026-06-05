@@ -319,3 +319,120 @@ class TestAuthCooldown:
 
             assert api._token is not None
             assert api._token["id_token"] == "id-token-xyz"
+
+
+# ---------------------------------------------------------------------------
+# Transient connection retry
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def no_sleep(monkeypatch):
+    """Replace asyncio.sleep with an instant no-op so retries don't slow tests."""
+    import asyncio as _asyncio
+
+    async def _noop(_seconds):
+        return None
+
+    monkeypatch.setattr(_asyncio, "sleep", _noop)
+
+
+class TestTransientRetry:
+    """Connection-level retry on TimeoutError / ClientConnectionError."""
+
+    @pytest.mark.asyncio
+    async def test_auth_retries_on_transient_error_and_recovers(self, no_sleep):
+        """First 2 auth attempts fail with conn error, 3rd succeeds."""
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                # aioresponses queues responses — first 2 fail, then success
+                m.post(
+                    AUTH0_TOKEN_URL,
+                    exception=aiohttp.ClientConnectionError("dns timeout"),
+                )
+                m.post(
+                    AUTH0_TOKEN_URL,
+                    exception=aiohttp.ClientConnectionError("dns timeout"),
+                )
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+
+                await api.authenticate()
+
+            assert api._token is not None
+            assert api._token["id_token"] == "id-token-xyz"
+
+    @pytest.mark.asyncio
+    async def test_auth_retries_exhausted_raises_connection_error(self, no_sleep):
+        """All retry attempts fail → GridxConnectionError bubbles up."""
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                # 4 attempts total (1 + 3 retries) — all fail
+                for _ in range(4):
+                    m.post(
+                        AUTH0_TOKEN_URL,
+                        exception=aiohttp.ClientConnectionError("dns timeout"),
+                    )
+
+                with pytest.raises(GridxConnectionError):
+                    await api.authenticate()
+
+    @pytest.mark.asyncio
+    async def test_get_retries_on_transient_error_and_recovers(self, no_sleep):
+        """Live data GET fails twice with conn error, succeeds on 3rd."""
+        live_data = load_fixture("live_data.json")
+        system_id = "system-id-001"
+        url = API_LIVE_URL.format(system_id)
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.get(url, exception=TimeoutError("read timeout"))
+                m.get(url, exception=aiohttp.ClientConnectionError("dns"))
+                m.get(url, payload=live_data)
+
+                result = await api.async_get_live_data(system_id)
+
+            assert isinstance(result, GridxSystemData)
+
+    @pytest.mark.asyncio
+    async def test_get_http_5xx_not_retried(self, no_sleep):
+        """Server errors (HTTP-level) should NOT trigger retry."""
+        system_id = "system-id-001"
+        url = API_LIVE_URL.format(system_id)
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                # Only ONE 500 — if retry kicked in, the test would need more
+                m.get(url, status=503)
+
+                with pytest.raises(GridxApiError):
+                    await api.async_get_live_data(system_id)
+
+    @pytest.mark.asyncio
+    async def test_get_401_triggers_reauth_not_transient_retry(self, no_sleep):
+        """401 must trigger token refresh path, not connection-retry loop."""
+        live_data = load_fixture("live_data.json")
+        system_id = "system-id-001"
+        url = API_LIVE_URL.format(system_id)
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.get(url, status=401)  # first attempt → reauth path
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.get(url, payload=live_data)  # second attempt → succeeds
+
+                result = await api.async_get_live_data(system_id)
+
+            assert isinstance(result, GridxSystemData)

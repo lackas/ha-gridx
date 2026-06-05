@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import time
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 import aiohttp
@@ -18,8 +21,12 @@ from .const import (
     AUTH0_SCOPE,
     AUTH0_TOKEN_URL,
     AUTH_COOLDOWN_SECONDS,
+    CONNECTION_RETRIES,
+    CONNECTION_RETRY_DELAY,
 )
 from .models import GridxSystemData, parse_live_data
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class GridxError(Exception):
@@ -36,6 +43,57 @@ class GridxConnectionError(GridxError):
 
 class GridxApiError(GridxError):
     """Unexpected API error (5xx, bad response)."""
+
+
+# Transient connection-layer errors that warrant a brief retry.
+# Excludes ClientResponseError (HTTP-level, the server replied) and
+# ClientPayloadError (mid-stream corruption — not helped by retry).
+_TRANSIENT_EXCEPTIONS: tuple[type[BaseException], ...] = (
+    TimeoutError,
+    aiohttp.ClientConnectionError,
+)
+
+
+async def _retry_transient(
+    coro_factory: Callable[[], Awaitable[Any]],
+    op_name: str = "request",
+) -> Any:
+    """Run an async HTTP coroutine, retrying on transient connection errors.
+
+    Only TimeoutError and aiohttp.ClientConnectionError trigger a retry
+    (DNS timeout, connection refused, read timeout). HTTP-level errors
+    (4xx, 5xx via raise_for_status) and Gridx*Error subclasses bubble out
+    immediately. Delay between attempts doubles each time (1s, 2s, 4s, ...).
+
+    Auth0 hostnames have CNAME chains (gridx.eu.auth0.com →
+    pivot.prod.auth0edge.com → cdn.cloudflare.net) with 2s TTLs on
+    intermediate hops, making DNS lookups more brittle than for single
+    A-record hosts. Brief retries with exponential backoff absorb that.
+    """
+    delay = CONNECTION_RETRY_DELAY
+    last_err: BaseException | None = None
+    for attempt in range(CONNECTION_RETRIES + 1):
+        try:
+            return await coro_factory()
+        except _TRANSIENT_EXCEPTIONS as err:
+            last_err = err
+            if attempt < CONNECTION_RETRIES:
+                _LOGGER.debug(
+                    "gridX %s attempt %d/%d failed (%s) — retrying in %.1fs",
+                    op_name,
+                    attempt + 1,
+                    CONNECTION_RETRIES + 1,
+                    err,
+                    delay,
+                )
+                await asyncio.sleep(delay)
+                delay *= 2
+                continue
+            # Exhausted retries — re-raise original type for outer handlers
+            raise
+    # Unreachable, but keeps type-checker happy
+    assert last_err is not None
+    raise last_err
 
 
 class GridxApi:
@@ -73,14 +131,17 @@ class GridxApi:
             "scope": AUTH0_SCOPE,
         }
 
-        try:
+        async def _do_request() -> dict[str, Any]:
             async with self._session.post(AUTH0_TOKEN_URL, json=payload) as resp:
                 if resp.status in (401, 403):
                     raise GridxAuthenticationError(
                         f"Authentication failed: HTTP {resp.status}"
                     )
                 resp.raise_for_status()
-                data = await resp.json()
+                return await resp.json()
+
+        try:
+            data = await _retry_transient(_do_request, op_name="auth")
         except aiohttp.ClientResponseError as err:
             if err.status in (401, 403):
                 raise GridxAuthenticationError(
@@ -109,14 +170,17 @@ class GridxApi:
             "client_id": AUTH0_CLIENT_ID,
         }
 
-        try:
+        async def _do_request() -> dict[str, Any]:
             async with self._session.post(AUTH0_TOKEN_URL, json=payload) as resp:
                 if resp.status in (401, 403):
                     raise GridxAuthenticationError(
                         f"Token refresh failed: HTTP {resp.status}"
                     )
                 resp.raise_for_status()
-                data = await resp.json()
+                return await resp.json()
+
+        try:
+            data = await _retry_transient(_do_request, op_name="refresh")
         except aiohttp.ClientResponseError as err:
             if err.status in (401, 403):
                 raise GridxAuthenticationError(
@@ -159,19 +223,19 @@ class GridxApi:
 
         headers = {"Authorization": f"Bearer {self._token['id_token']}"}
 
-        try:
+        async def _do_request() -> Any:
             async with self._session.get(url, headers=headers) as resp:
                 if resp.status in (401, 403):
-                    if not _retried:
-                        self._token = None
-                        return await self._get(url, _retried=True)
-                    raise GridxAuthenticationError(
-                        f"API request unauthorized: HTTP {resp.status}"
-                    )
+                    # Surface as ClientResponseError so the outer except can
+                    # decide whether to refresh the token and retry once.
+                    resp.raise_for_status()
                 if resp.status >= 500:
                     raise GridxApiError(f"Server error: HTTP {resp.status}")
                 resp.raise_for_status()
                 return await resp.json()
+
+        try:
+            return await _retry_transient(_do_request, op_name="GET")
         except GridxError:
             raise
         except aiohttp.ClientResponseError as err:
