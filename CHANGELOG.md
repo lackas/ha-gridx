@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.16] - 2026-06-09
+
+### Fixed
+
+- Sensor platform setup no longer crashes with `TypeError: 'NoneType' object is not iterable` when the historical-data API call fails on integration startup. Historical entities are now built from the configured `system_ids` rather than from `coordinator.data`, so they appear as "unknown" until the next successful poll instead of preventing platform setup entirely. The historical sensor's `native_value` also tolerates `coordinator.data is None`.
+
 ### Added
 
-- Now available directly in HACS default — no custom repository setup needed. Just search "gridX Energy Management" in HACS to install.
+- Now available directly in HACS default — no custom repository setup needed. Just search "gridX Energy Management" in HACS to install. (This was already true since the HACS default merge on 2026-05-15 but was never moved out of the changelog's `[Unreleased]` section.)
 
 ## [1.0.15] - 2026-06-05
 

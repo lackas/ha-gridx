@@ -51,10 +51,17 @@ Note: Use `~/src/venv/ha/bin/python -m pytest` (not bare `pytest`) to ensure the
 
 ## Releasing
 
-1. Bump `version` in `custom_components/gridx/manifest.json`
-2. Commit and push
-3. Tag and push: `git tag v1.x.x && git push origin v1.x.x`
-4. Create GitHub release: `gh release create v1.x.x --title "v1.x.x" --notes "..."`
+1. Make sure tests + ruff are clean:
+   `~/src/venv/ha/bin/python -m pytest tests/components/gridx/ --timeout=10 -q`
+   `~/src/venv/ha/bin/ruff format custom_components/gridx/ tests/ && ~/src/venv/ha/bin/ruff check custom_components/gridx/ tests/`
+2. Bump `version` in `custom_components/gridx/manifest.json` (semver: patch for bug fixes, minor for new sensors/features).
+3. Update `CHANGELOG.md`: insert a new `## [1.x.x] - YYYY-MM-DD` section above the previous release and move/pull relevant items into it. Keep `## [Unreleased]` as an empty header on top. Carry forward any `[Unreleased]` items that should ship.
+4. **Show the commit message and GitHub release notes to the user for approval before publishing** (per the public-communication policy — releases are public). Only continue once approved.
+5. Stage exactly the touched files and commit:
+   `git add custom_components/gridx/manifest.json CHANGELOG.md ...` then `git commit -m "..."`.
+6. Push: `git push origin main`.
+7. Tag and push the tag: `git tag v1.x.x && git push origin v1.x.x`.
+8. Create the GitHub release: `gh release create v1.x.x --title "v1.x.x" --notes-file <(...)` — use the approved notes verbatim. HACS picks up the tagged release automatically; no further action.
 
 HACS picks up new releases automatically — no PR needed (the hacs/default registration was a one-time step).
 
@@ -70,7 +77,7 @@ hassfest requires: `domain` first, `name` second, then all other keys alphabetic
 
 ## Key Design Decisions
 
-- **No historical data** — HA handles its own statistics from live sensor data
+- **Historical sensors are opt-in** — 4 historical system sensors (battery charge/discharge, heat pump energy, direct-consumption heat pump) are registered but `entity_registry_enabled_default=False`; HA's own statistics from live sensors are the default path. Historical coordinator failures must not block setup or sensor creation — see `__init__.py` (swallows first-refresh exception) and `_build_historical_entities` in `sensor.py` (builds entities from `entry.data["system_ids"]`, not `coordinator.data`).
 - **E.ON only** — Viessmann realm dropped; architecture supports adding it later via constants
 - **API respect** — exponential backoff (120s → 15min cap), auth cooldown (max 1 attempt/60s), no immediate retries
 - **Device-per-appliance** — batteries, heat pumps, EV chargers, heaters each get their own HA device

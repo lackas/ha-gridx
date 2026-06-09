@@ -723,6 +723,8 @@ class GridxHistoricalSystemSensor(
 
     @property
     def native_value(self) -> StateType:
+        if self.coordinator.data is None:
+            return None
         data = self.coordinator.data.get(self._system_id)
         if data is None:
             return None
@@ -895,11 +897,12 @@ def _build_entities(coordinator: GridxCoordinator) -> list:
 
 def _build_historical_entities(
     coordinator: GridxHistoricalCoordinator,
+    system_ids: list[str],
 ) -> list[GridxHistoricalSystemSensor]:
-    """Build all historical sensor entities from coordinator data."""
+    """Build all historical sensor entities for the configured systems."""
     entities: list[GridxHistoricalSystemSensor] = []
 
-    for system_id in coordinator.data:
+    for system_id in system_ids:
         for description in HISTORICAL_SYSTEM_SENSOR_DESCRIPTIONS:
             entities.append(
                 GridxHistoricalSystemSensor(coordinator, system_id, description)
@@ -925,5 +928,5 @@ async def async_setup_entry(
     ]
     async_add_entities(
         _build_entities(live_coordinator)
-        + _build_historical_entities(historical_coordinator)
+        + _build_historical_entities(historical_coordinator, entry.data["system_ids"])
     )

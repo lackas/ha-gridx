@@ -520,7 +520,7 @@ class TestHistoricalSystemSensors:
             }
         }
 
-        entities = _build_historical_entities(coordinator)
+        entities = _build_historical_entities(coordinator, ["system-1"])
 
         assert len(entities) == 4
         assert all(
@@ -533,6 +533,21 @@ class TestHistoricalSystemSensors:
             "system-1_hist_heat_pump_energy",
             "system-1_hist_direct_consumption_heat_pump",
         }
+
+    def test_build_historical_entities_when_coordinator_data_is_none(self):
+        """Entities are created from system_ids even if first refresh failed."""
+        from unittest.mock import MagicMock
+
+        from custom_components.gridx.sensor import _build_historical_entities
+
+        coordinator = MagicMock()
+        coordinator.data = None
+
+        entities = _build_historical_entities(coordinator, ["system-1"])
+
+        assert len(entities) == 4
+        for entity in entities:
+            assert entity.native_value is None
 
 
 # ---------------------------------------------------------------------------
