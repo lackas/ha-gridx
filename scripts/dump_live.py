@@ -9,14 +9,14 @@ import aiohttp
 
 sys.path.insert(0, "custom_components/gridx")
 from const import (
-    API_LIVE_URL,
     API_GATEWAYS_URL,
+    API_LIVE_URL,
     AUTH0_AUDIENCE,
-    AUTH0_CLIENT_ID,
     AUTH0_GRANT_TYPE,
-    AUTH0_REALM,
     AUTH0_SCOPE,
     AUTH0_TOKEN_URL,
+    DEFAULT_PROVIDER,
+    PROVIDERS,
 )
 
 
@@ -29,10 +29,13 @@ async def main():
             email = entry["data"]["email"]
             password = entry["data"]["password"]
             system_ids = entry["data"]["system_ids"]
+            provider_key = entry["data"].get("provider", DEFAULT_PROVIDER)
             break
     else:
         print("No gridx config entry found")
         return
+
+    provider = PROVIDERS[provider_key]
 
     async with aiohttp.ClientSession() as session:
         # Authenticate
@@ -40,9 +43,9 @@ async def main():
             "grant_type": AUTH0_GRANT_TYPE,
             "username": email,
             "password": password,
-            "client_id": AUTH0_CLIENT_ID,
+            "client_id": provider.client_id,
             "audience": AUTH0_AUDIENCE,
-            "realm": AUTH0_REALM,
+            "realm": provider.realm,
             "scope": AUTH0_SCOPE,
         }
         async with session.post(AUTH0_TOKEN_URL, json=payload) as resp:

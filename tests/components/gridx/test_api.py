@@ -49,6 +49,62 @@ TOKEN_RESPONSE = {
 # ---------------------------------------------------------------------------
 
 
+class TestProviderSelection:
+    @pytest.mark.asyncio
+    async def test_default_provider_sends_eon_home_credentials(self):
+        """No provider arg → E.ON Home Manager client_id + realm in payload."""
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                await api.authenticate()
+
+                request = m.requests[("POST", aiohttp.client.URL(AUTH0_TOKEN_URL))][0]
+                payload = request.kwargs["json"]
+
+            assert payload["client_id"] == "mG0Phmo7DmnvAqO7p6B0WOYBODppY3cc"
+            assert payload["realm"] == "eon-home-authentication-db"
+
+    @pytest.mark.asyncio
+    async def test_ibc_homeone_provider_sends_ibc_credentials(self):
+        """provider='ibc_homeone' → IBC HomeOne client_id + realm in payload.
+
+        This is the regression test for the IBC HomeOne Hub support request
+        (ha-gridx#5). Verifies that picking a non-default provider actually
+        routes the Auth0 password-realm grant against the IBC user pool.
+        """
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(
+                session, "user@example.com", "secret", provider="ibc_homeone"
+            )
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                await api.authenticate()
+
+                request = m.requests[("POST", aiohttp.client.URL(AUTH0_TOKEN_URL))][0]
+                payload = request.kwargs["json"]
+
+            assert payload["client_id"] == "F9aEJdfve0nL65yA0aWSdCwiWqDYIHgm"
+            assert payload["realm"] == "ibc-homeone-authentication-db"
+
+    @pytest.mark.asyncio
+    async def test_unknown_provider_falls_back_to_default(self):
+        """Stale entry data with an unknown provider key uses the default."""
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret", provider="bogus")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                await api.authenticate()
+
+                request = m.requests[("POST", aiohttp.client.URL(AUTH0_TOKEN_URL))][0]
+                payload = request.kwargs["json"]
+
+            assert payload["realm"] == "eon-home-authentication-db"
+
+
 class TestAuthenticate:
     @pytest.mark.asyncio
     async def test_authenticate_success(self):

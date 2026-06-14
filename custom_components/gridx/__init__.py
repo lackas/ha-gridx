@@ -7,7 +7,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import GridxApi
-from .const import COORDINATOR_HISTORICAL, COORDINATOR_LIVE
+from .const import (
+    CONF_PROVIDER,
+    COORDINATOR_HISTORICAL,
+    COORDINATOR_LIVE,
+    DEFAULT_PROVIDER,
+)
 from .coordinator import GridxCoordinator, GridxHistoricalCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,6 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GridxConfigEntry) -> boo
         async_get_clientsession(hass),
         entry.data["email"],
         entry.data["password"],
+        provider=entry.data.get(CONF_PROVIDER, DEFAULT_PROVIDER),
     )
     live_coordinator = GridxCoordinator(hass, api, entry)
     historical_coordinator = GridxHistoricalCoordinator(hass, api, entry)

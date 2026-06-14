@@ -15,14 +15,15 @@ from .const import (
     API_HISTORICAL_URL,
     API_LIVE_URL,
     AUTH0_AUDIENCE,
-    AUTH0_CLIENT_ID,
     AUTH0_GRANT_TYPE,
-    AUTH0_REALM,
     AUTH0_SCOPE,
     AUTH0_TOKEN_URL,
     AUTH_COOLDOWN_SECONDS,
     CONNECTION_RETRIES,
     CONNECTION_RETRY_DELAY,
+    DEFAULT_PROVIDER,
+    PROVIDERS,
+    Provider,
 )
 from .models import GridxSystemData, parse_live_data
 
@@ -96,16 +97,42 @@ async def _retry_transient(
     raise last_err
 
 
+def _resolve_provider(provider: Provider | str | None) -> Provider:
+    """Resolve a Provider, a key, or None into a Provider object.
+
+    Unknown keys fall back to the default with a warning so a stale
+    config entry can't break startup outright.
+    """
+    if isinstance(provider, Provider):
+        return provider
+    key = provider or DEFAULT_PROVIDER
+    if key not in PROVIDERS:
+        _LOGGER.warning(
+            "Unknown gridX provider %r, falling back to %s", key, DEFAULT_PROVIDER
+        )
+        key = DEFAULT_PROVIDER
+    return PROVIDERS[key]
+
+
 class GridxApi:
     """Async client for the gridX API."""
 
     def __init__(
-        self, session: aiohttp.ClientSession, email: str, password: str
+        self,
+        session: aiohttp.ClientSession,
+        email: str,
+        password: str,
+        provider: Provider | str | None = None,
     ) -> None:
-        """Initialize the API client."""
+        """Initialize the API client.
+
+        ``provider`` may be a Provider, a key into PROVIDERS, or None
+        (defaults to E.ON Home Manager for backward compatibility).
+        """
         self._session = session
         self._email = email
         self._password = password
+        self._provider = _resolve_provider(provider)
         self._token: dict[str, Any] | None = None
         self._last_auth_attempt: float = 0  # monotonic timestamp
 
@@ -125,9 +152,9 @@ class GridxApi:
             "grant_type": AUTH0_GRANT_TYPE,
             "username": self._email,
             "password": self._password,
-            "client_id": AUTH0_CLIENT_ID,
+            "client_id": self._provider.client_id,
             "audience": AUTH0_AUDIENCE,
-            "realm": AUTH0_REALM,
+            "realm": self._provider.realm,
             "scope": AUTH0_SCOPE,
         }
 
@@ -167,7 +194,7 @@ class GridxApi:
         payload = {
             "grant_type": "refresh_token",
             "refresh_token": self._token["refresh_token"],
-            "client_id": AUTH0_CLIENT_ID,
+            "client_id": self._provider.client_id,
         }
 
         # NOTE: refresh-token grants are NOT wrapped with _retry_transient.

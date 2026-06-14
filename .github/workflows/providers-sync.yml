@@ -1,0 +1,20 @@
+name: Provider dict drift check
+
+on:
+  push:
+    tags:
+      - "v*"
+  schedule:
+    - cron: "0 6 * * 1"  # Mondays at 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check-providers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Run drift check
+        run: python scripts/update_providers.py --check

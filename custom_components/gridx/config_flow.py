@@ -3,6 +3,12 @@
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
 from .api import (
     GridxApi,
@@ -10,7 +16,18 @@ from .api import (
     GridxAuthenticationError,
     GridxConnectionError,
 )
-from .const import DOMAIN
+from .const import CONF_PROVIDER, DEFAULT_PROVIDER, DOMAIN, PROVIDERS
+
+
+def _provider_selector() -> SelectSelector:
+    """Build a dropdown of every OEM portal known to the integration."""
+    options = [
+        SelectOptionDict(value=p.key, label=p.label)
+        for p in sorted(PROVIDERS.values(), key=lambda x: x.label.lower())
+    ]
+    return SelectSelector(
+        SelectSelectorConfig(options=options, mode=SelectSelectorMode.DROPDOWN)
+    )
 
 
 class GridxConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -26,6 +43,7 @@ class GridxConfigFlow(ConfigFlow, domain=DOMAIN):
                 async_get_clientsession(self.hass),
                 user_input["email"],
                 user_input["password"],
+                provider=user_input[CONF_PROVIDER],
             )
             try:
                 await api.authenticate()
@@ -43,6 +61,7 @@ class GridxConfigFlow(ConfigFlow, domain=DOMAIN):
                     return self.async_create_entry(
                         title="gridX Energy Management",
                         data={
+                            CONF_PROVIDER: user_input[CONF_PROVIDER],
                             "email": user_input["email"],
                             "password": user_input["password"],
                             "system_ids": system_ids,
@@ -53,6 +72,9 @@ class GridxConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
+                    vol.Required(
+                        CONF_PROVIDER, default=DEFAULT_PROVIDER
+                    ): _provider_selector(),
                     vol.Required("email"): str,
                     vol.Required("password"): str,
                 }
@@ -74,6 +96,7 @@ class GridxConfigFlow(ConfigFlow, domain=DOMAIN):
                 async_get_clientsession(self.hass),
                 entry.data["email"],
                 user_input["password"],
+                provider=entry.data.get(CONF_PROVIDER, DEFAULT_PROVIDER),
             )
             try:
                 await api.authenticate()

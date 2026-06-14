@@ -95,12 +95,13 @@ async def test_user_flow_success():
         ),
     ):
         result = await flow.async_step_user(
-            {"email": "user@example.com", "password": "secret"}
+            {"provider": "eon_home", "email": "user@example.com", "password": "secret"}
         )
 
     assert result["type"] == "create_entry"
     assert result["title"] == "gridX Energy Management"
     assert result["data"] == {
+        "provider": "eon_home",
         "email": "user@example.com",
         "password": "secret",
         "system_ids": ["system-id-001"],
@@ -136,14 +137,14 @@ async def test_user_flow_invalid_auth_then_success():
     ):
         # First attempt: bad credentials
         result = await flow.async_step_user(
-            {"email": "user@example.com", "password": "wrong"}
+            {"provider": "eon_home", "email": "user@example.com", "password": "wrong"}
         )
         assert result["type"] == "form"
         assert result["errors"] == {"base": "invalid_auth"}
 
         # Second attempt: good credentials
         result = await flow.async_step_user(
-            {"email": "user@example.com", "password": "correct"}
+            {"provider": "eon_home", "email": "user@example.com", "password": "correct"}
         )
 
     assert result["type"] == "create_entry"
@@ -174,13 +175,13 @@ async def test_user_flow_cannot_connect_then_success():
         ),
     ):
         result = await flow.async_step_user(
-            {"email": "user@example.com", "password": "secret"}
+            {"provider": "eon_home", "email": "user@example.com", "password": "secret"}
         )
         assert result["type"] == "form"
         assert result["errors"] == {"base": "cannot_connect"}
 
         result = await flow.async_step_user(
-            {"email": "user@example.com", "password": "secret"}
+            {"provider": "eon_home", "email": "user@example.com", "password": "secret"}
         )
 
     assert result["type"] == "create_entry"
@@ -209,13 +210,13 @@ async def test_user_flow_api_error_then_success():
         ),
     ):
         result = await flow.async_step_user(
-            {"email": "user@example.com", "password": "secret"}
+            {"provider": "eon_home", "email": "user@example.com", "password": "secret"}
         )
         assert result["type"] == "form"
         assert result["errors"] == {"base": "cannot_connect"}
 
         result = await flow.async_step_user(
-            {"email": "user@example.com", "password": "secret"}
+            {"provider": "eon_home", "email": "user@example.com", "password": "secret"}
         )
 
     assert result["type"] == "create_entry"

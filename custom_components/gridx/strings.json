@@ -3,8 +3,9 @@
     "step": {
       "user": {
         "title": "gridX Energy Management",
-        "description": "Enter your E.ON Home / gridX account credentials.",
+        "description": "Pick the portal where you log in (E.ON Home Manager, IBC HomeOne, etc.), then enter your gridX account credentials.",
         "data": {
+          "provider": "Provider",
           "email": "Email",
           "password": "Password"
         }

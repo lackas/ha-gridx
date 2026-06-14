@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-14
+
+### Added
+
+- **Multi-provider support.** The config flow now lets you pick the portal you log in through. Supported OEMs: 1KOMMA5°, EFA-Home, empavo, enviaM, E.ON FEH (NL), E.ON Home Manager (default), EVM, EWV, Giedorf, Greenblocks, Heimwatt, hemos, **IBC HomeOne Hub**, KlarSolar, LEW, Octopus Energy, PV Green, Stadtwerke Norderstedt, upVolt, Viessmann GridBox (legacy), Zero 1.
+
+  Background: the gridX backend (`api.gridx.de`) is shared across 21+ white-labeled OEM portals. Every portal uses the same Auth0 tenant — only the `client_id` and `realm` differ. Until this release, the integration hard-coded the E.ON Home values, so users of other portals (like IBC HomeOne) got a 401 at login even though their data was reachable. Picking the right provider in the config flow routes the Auth0 password-realm grant against the correct user pool.
+
+  Existing entries default to E.ON Home Manager — no migration or reauthentication required.
+
+- `scripts/update_providers.py` extracts the OEM list verbatim from the live multi-tenant SPA bundle at `homeone.gridx.de`. A weekly GitHub Action re-runs it with `--check` so stale `client_id`s surface as CI failures rather than user reports.
+
 ## [1.0.16] - 2026-06-09
 
 ### Fixed
