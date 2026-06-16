@@ -2,7 +2,13 @@
 
 Home Assistant integration for gridX-based energy management systems.
 
-**Also known as:** E.ON Home Manager, Viessmann Gridbox
+## Supported brands
+
+The gridX platform powers energy managers sold under many white-label brands. This integration works with all of them — pick your portal in the config flow:
+
+**1KOMMA5°**, **EFA-Home**, **empavo**, **enviaM**, **E.ON FEH** (Netherlands), **E.ON Home Manager** (default), **EVM** (Energieversorgung Mittelrhein), **EWV** (Energie- und Wasser-Versorgung), **Giedorf**, **Greenblocks**, **Heimwatt**, **hemos**, **IBC HomeOne Hub** (IBC Solar), **KlarSolar**, **LEW** (Lechwerke), **Octopus Energy**, **PV Green**, **Stadtwerke Norderstedt**, **upVolt**, **Viessmann GridBox** (legacy — Viessmann realm shut down end of 2025), **Zero 1**.
+
+All portals share the same `api.gridx.de` backend; only the Auth0 `client_id` / `realm` differs per OEM. New portals are auto-detected weekly by CI from the live gridX SPA bundle.
 
 ## Features
 
@@ -30,7 +36,7 @@ Copy the `custom_components/gridx` folder to your Home Assistant `custom_compone
 
 1. Go to Settings → Devices & Services → Add Integration
 2. Search for "gridX"
-3. Enter your E.ON Home / gridX account email and password
+3. Pick your portal from the **Provider** dropdown, then enter your email and password
 
 ## Updating
 
