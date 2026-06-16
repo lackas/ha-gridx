@@ -99,14 +99,6 @@ If you want daily/monthly totals that reset at midnight, add a [Utility Meter he
 
 This is an unofficial, community-maintained integration. It is not affiliated with, endorsed by, or supported by gridX GmbH or E.ON SE.
 
-## Credits
-
-Inspired by and based on the work of:
-- [unl0ck's Viessmann Gridbox Connector add-on](https://github.com/unl0ck/homeassistant-addon-viessmann-gridbox)
-- [unl0ck's gridx-connector library](https://github.com/unl0ck/gridx-connector)
-
-This is a clean-room reimplementation as a native HA integration. No code was copied from the original projects.
-
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE)

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-06-16
+
+### Added
+
+- New OEM portal: **Bdl Next** (`bdl-next-authentication-db`).
+
 ## [1.1.0] - 2026-06-16
 
 ### Added

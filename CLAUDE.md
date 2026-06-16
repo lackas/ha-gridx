@@ -82,8 +82,4 @@ hassfest requires: `domain` first, `name` second, then all other keys alphabetic
 - **API respect** — exponential backoff (120s → 15min cap), auth cooldown (max 1 attempt/60s), no immediate retries
 - **Device-per-appliance** — batteries, heat pumps, EV chargers, heaters each get their own HA device
 - **Dynamic naming** — first appliance: no suffix, second+: `_2`, `_3`
-- **Clean-room** — inspired by unl0ck's work, no code copied
-
-## Attribution
-
-Inspired by [unl0ck's Viessmann Gridbox Connector](https://github.com/unl0ck/homeassistant-addon-viessmann-gridbox) and [gridx-connector](https://github.com/unl0ck/gridx-connector).
+- **Clean-room** — independently implemented as a native HA integration

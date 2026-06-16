@@ -72,6 +72,12 @@ PROVIDERS: Final[dict[str, Provider]] = {
         client_id="CrqUiQt6VhwOgWHqkX40CgYNlhABF3dB",
         realm="1komma5grad-authentication-db",
     ),
+    "bdl_next": Provider(
+        key="bdl_next",
+        label="Bdl Next",
+        client_id="xVDQkuyCK9gRm4Di1uNAwpWjKLehUu1u",
+        realm="bdl-next-authentication-db",
+    ),
     "efa_home": Provider(
         key="efa_home",
         label="EFA-Home",
