@@ -270,55 +270,62 @@ HISTORICAL_SYSTEM_SENSOR_DESCRIPTIONS: tuple[
 
 # ---------------------------------------------------------------------------
 # Battery sensor descriptions (7 total)
+#
+# These read the SYSTEM-LEVEL aggregate "battery" object (one set per gateway,
+# keyed by system_id). They were previously appliance-level, keyed by the gridX
+# applianceID — but gridX reassigns that ID on every re-registration/EEBUS
+# re-pairing of the battery, which orphaned the old entities (-> unavailable)
+# and spawned duplicates (..._2, ..._3) every time. The system aggregate is
+# stable across applianceID churn and identical for a single-battery system.
 # ---------------------------------------------------------------------------
 
-BATTERY_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
-    GridxApplianceSensorDescription(
+SYSTEM_BATTERY_SENSOR_DESCRIPTIONS: tuple[GridxSystemSensorDescription, ...] = (
+    GridxSystemSensorDescription(
         key="battery_state_of_charge",
         translation_key="battery_state_of_charge",
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=1,
-        value_fn=lambda b: round(b.state_of_charge * 100, 10),
+        value_fn=lambda d: round(d.battery_state_of_charge * 100, 10),
     ),
-    GridxApplianceSensorDescription(
+    GridxSystemSensorDescription(
         key="battery_power",
         translation_key="battery_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
-        value_fn=lambda b: b.power,
+        value_fn=lambda d: d.battery_power,
     ),
-    GridxApplianceSensorDescription(
+    GridxSystemSensorDescription(
         key="battery_charge",
         translation_key="battery_charge",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
-        value_fn=lambda b: b.charge,
+        value_fn=lambda d: d.battery_charge,
     ),
-    GridxApplianceSensorDescription(
+    GridxSystemSensorDescription(
         key="battery_discharge",
         translation_key="battery_discharge",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
-        value_fn=lambda b: b.discharge,
+        value_fn=lambda d: d.battery_discharge,
     ),
-    GridxApplianceSensorDescription(
+    GridxSystemSensorDescription(
         key="battery_remaining_charge",
         translation_key="battery_remaining_charge",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY_STORAGE,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
-        value_fn=lambda b: b.remaining_charge,
+        value_fn=lambda d: d.battery_remaining_charge,
     ),
-    GridxApplianceSensorDescription(
+    GridxSystemSensorDescription(
         key="battery_capacity",
         translation_key="battery_capacity",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
@@ -326,9 +333,9 @@ BATTERY_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda b: b.capacity,
+        value_fn=lambda d: d.battery_capacity,
     ),
-    GridxApplianceSensorDescription(
+    GridxSystemSensorDescription(
         key="battery_nominal_capacity",
         translation_key="battery_nominal_capacity",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
@@ -336,7 +343,7 @@ BATTERY_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda b: b.nominal_capacity,
+        value_fn=lambda d: d.battery_nominal_capacity,
     ),
 )
 
@@ -771,9 +778,21 @@ _SYSTEM_ENERGY_SENSORS: list[tuple[str, str, Callable[[GridxSystemData], float]]
     ("self_supply_energy", "self_supply_energy", lambda d: d.self_supply),
 ]
 
+# Battery energy accumulators, system-level (keyed by system_id, stable across
+# applianceID churn). Only built when the system actually has a battery.
+_SYSTEM_BATTERY_ENERGY_SENSORS: list[
+    tuple[str, str, Callable[[GridxSystemData], float]]
+] = [
+    ("battery_charge_energy", "battery_charge_energy", lambda d: d.battery_charge),
+    (
+        "battery_discharge_energy",
+        "battery_discharge_energy",
+        lambda d: d.battery_discharge,
+    ),
+]
+
 
 _APPLIANCE_CONFIG: list[tuple[str, str, tuple, str]] = [
-    ("batteries", "gridX Battery", BATTERY_SENSOR_DESCRIPTIONS, "batteries"),
     ("heat_pumps", "gridX Heat Pump", HEAT_PUMP_SENSOR_DESCRIPTIONS, "heat_pumps"),
     (
         "ev_charging_stations",
@@ -805,6 +824,22 @@ def _build_entities(coordinator: GridxCoordinator) -> list:
                     power_fn=power_fn,
                 )
             )
+
+        # System-level aggregate battery (stable: keyed by system_id, immune to
+        # applianceID churn). Only when the system actually has a battery.
+        if system_data.batteries:
+            for description in SYSTEM_BATTERY_SENSOR_DESCRIPTIONS:
+                entities.append(GridxSystemSensor(coordinator, system_id, description))
+            for key, translation_key, power_fn in _SYSTEM_BATTERY_ENERGY_SENSORS:
+                entities.append(
+                    GridxSystemEnergySensor(
+                        coordinator=coordinator,
+                        system_id=system_id,
+                        key=key,
+                        translation_key=translation_key,
+                        power_fn=power_fn,
+                    )
+                )
 
         # Appliance-level sensors
         for attr_name, base_name, descriptions, _ in _APPLIANCE_CONFIG:
@@ -857,38 +892,6 @@ def _build_entities(coordinator: GridxCoordinator) -> list:
                     key="heater_energy",
                     translation_key="heater_energy",
                     power_fn=lambda h: h.power,
-                )
-            )
-
-        # Energy accumulator sensors for batteries (charge / discharge)
-        for index, bat in enumerate(system_data.batteries):
-            device_name = _appliance_device_name(
-                "gridX Battery", index, len(system_data.batteries)
-            )
-            entities.append(
-                GridxApplianceEnergySensor(
-                    coordinator=coordinator,
-                    system_id=system_id,
-                    appliance_id=f"{bat.appliance_id}_charge",
-                    appliance_type="batteries",
-                    device_name=device_name,
-                    key="battery_charge_energy",
-                    translation_key="battery_charge_energy",
-                    power_fn=lambda b: b.charge,
-                    lookup_appliance_id=bat.appliance_id,
-                )
-            )
-            entities.append(
-                GridxApplianceEnergySensor(
-                    coordinator=coordinator,
-                    system_id=system_id,
-                    appliance_id=f"{bat.appliance_id}_discharge",
-                    appliance_type="batteries",
-                    device_name=device_name,
-                    key="battery_discharge_energy",
-                    translation_key="battery_discharge_energy",
-                    power_fn=lambda b: b.discharge,
-                    lookup_appliance_id=bat.appliance_id,
                 )
             )
 

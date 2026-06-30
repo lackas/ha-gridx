@@ -17,16 +17,16 @@ from custom_components.gridx.models import (
 
 def _get_descriptions():
     from custom_components.gridx.sensor import (
-        BATTERY_SENSOR_DESCRIPTIONS,
         EV_CHARGER_SENSOR_DESCRIPTIONS,
         HEAT_PUMP_SENSOR_DESCRIPTIONS,
         HEATER_SENSOR_DESCRIPTIONS,
+        SYSTEM_BATTERY_SENSOR_DESCRIPTIONS,
         SYSTEM_SENSOR_DESCRIPTIONS,
     )
 
     return (
         SYSTEM_SENSOR_DESCRIPTIONS,
-        BATTERY_SENSOR_DESCRIPTIONS,
+        SYSTEM_BATTERY_SENSOR_DESCRIPTIONS,
         HEAT_PUMP_SENSOR_DESCRIPTIONS,
         EV_CHARGER_SENSOR_DESCRIPTIONS,
         HEATER_SENSOR_DESCRIPTIONS,
@@ -138,40 +138,37 @@ class TestSystemSensorValueExtraction:
 
 class TestBatterySensorValueExtraction:
     def test_battery_sensor_value_extraction(self):
-        """All BATTERY_SENSOR_DESCRIPTIONS value_fns return correct fields."""
-        battery = GridxBattery(
-            appliance_id="bat-1",
-            state_of_charge=0.75,
-            power=1000.0,
-            charge=200.0,
-            discharge=0.0,
-            remaining_charge=11000.0,
-            capacity=15000.0,
-            nominal_capacity=15000.0,
+        """Battery value_fns read the system-level aggregate battery fields."""
+        data = GridxSystemData(
+            battery_state_of_charge=0.75,
+            battery_power=1000.0,
+            battery_charge=200.0,
+            battery_discharge=0.0,
+            battery_remaining_charge=11000.0,
+            battery_capacity=15000.0,
+            battery_nominal_capacity=15000.0,
         )
 
-        (_, BATTERY_SENSOR_DESCRIPTIONS, _, _, _) = _get_descriptions()
-        desc_map = {d.key: d for d in BATTERY_SENSOR_DESCRIPTIONS}
+        (_, SYSTEM_BATTERY_SENSOR_DESCRIPTIONS, _, _, _) = _get_descriptions()
+        desc_map = {d.key: d for d in SYSTEM_BATTERY_SENSOR_DESCRIPTIONS}
 
         # state_of_charge is multiplied by 100
-        assert desc_map["battery_state_of_charge"].value_fn(battery) == pytest.approx(
-            75.0
-        )
-        assert desc_map["battery_power"].value_fn(battery) == pytest.approx(1000.0)
-        assert desc_map["battery_charge"].value_fn(battery) == pytest.approx(200.0)
-        assert desc_map["battery_discharge"].value_fn(battery) == pytest.approx(0.0)
-        assert desc_map["battery_remaining_charge"].value_fn(battery) == pytest.approx(
+        assert desc_map["battery_state_of_charge"].value_fn(data) == pytest.approx(75.0)
+        assert desc_map["battery_power"].value_fn(data) == pytest.approx(1000.0)
+        assert desc_map["battery_charge"].value_fn(data) == pytest.approx(200.0)
+        assert desc_map["battery_discharge"].value_fn(data) == pytest.approx(0.0)
+        assert desc_map["battery_remaining_charge"].value_fn(data) == pytest.approx(
             11000.0
         )
-        assert desc_map["battery_capacity"].value_fn(battery) == pytest.approx(15000.0)
-        assert desc_map["battery_nominal_capacity"].value_fn(battery) == pytest.approx(
+        assert desc_map["battery_capacity"].value_fn(data) == pytest.approx(15000.0)
+        assert desc_map["battery_nominal_capacity"].value_fn(data) == pytest.approx(
             15000.0
         )
 
     def test_battery_descriptions_count(self):
         """There are exactly 7 battery sensor descriptions."""
-        (_, BATTERY_SENSOR_DESCRIPTIONS, _, _, _) = _get_descriptions()
-        assert len(BATTERY_SENSOR_DESCRIPTIONS) == 7
+        (_, SYSTEM_BATTERY_SENSOR_DESCRIPTIONS, _, _, _) = _get_descriptions()
+        assert len(SYSTEM_BATTERY_SENSOR_DESCRIPTIONS) == 7
 
 
 # ---------------------------------------------------------------------------
@@ -304,8 +301,8 @@ class TestDiagnosticEntities:
         """Battery capacity and nominal_capacity have DIAGNOSTIC category."""
         from homeassistant.const import EntityCategory
 
-        (_, BATTERY_SENSOR_DESCRIPTIONS, _, _, _) = _get_descriptions()
-        desc_map = {d.key: d for d in BATTERY_SENSOR_DESCRIPTIONS}
+        (_, SYSTEM_BATTERY_SENSOR_DESCRIPTIONS, _, _, _) = _get_descriptions()
+        desc_map = {d.key: d for d in SYSTEM_BATTERY_SENSOR_DESCRIPTIONS}
 
         assert desc_map["battery_capacity"].entity_category == EntityCategory.DIAGNOSTIC
         assert (
@@ -317,8 +314,8 @@ class TestDiagnosticEntities:
         """power, charge, discharge etc. must NOT have DIAGNOSTIC category."""
         from homeassistant.const import EntityCategory
 
-        (_, BATTERY_SENSOR_DESCRIPTIONS, _, _, _) = _get_descriptions()
-        desc_map = {d.key: d for d in BATTERY_SENSOR_DESCRIPTIONS}
+        (_, SYSTEM_BATTERY_SENSOR_DESCRIPTIONS, _, _, _) = _get_descriptions()
+        desc_map = {d.key: d for d in SYSTEM_BATTERY_SENSOR_DESCRIPTIONS}
 
         for key in (
             "battery_state_of_charge",
@@ -371,12 +368,17 @@ class TestNoAppliances:
         assert len(appliance_entities) == 0
 
     def test_with_appliances_creates_entities(self):
-        """With 1 battery + 1 heat pump, correct number of entities are created."""
+        """With 1 battery + 1 heat pump, correct number of entities are created.
+
+        The battery is now SYSTEM-level (aggregate, keyed by system_id), not
+        appliance-level — immune to gridX applianceID churn.
+        """
         from unittest.mock import MagicMock
 
         from custom_components.gridx.sensor import (
             GridxApplianceEnergySensor,
             GridxApplianceSensor,
+            GridxSystemEnergySensor,
             GridxSystemSensor,
             _build_entities,
         )
@@ -392,6 +394,9 @@ class TestNoAppliances:
         entities = _build_entities(coordinator)
 
         system_count = sum(1 for e in entities if isinstance(e, GridxSystemSensor))
+        system_energy_count = sum(
+            1 for e in entities if isinstance(e, GridxSystemEnergySensor)
+        )
         appliance_count = sum(
             1 for e in entities if isinstance(e, GridxApplianceSensor)
         )
@@ -399,11 +404,24 @@ class TestNoAppliances:
             1 for e in entities if isinstance(e, GridxApplianceEnergySensor)
         )
 
-        assert system_count == 17
-        # 7 battery + 2 heat pump = 9 appliance sensors
-        assert appliance_count == 9
-        # 1 heat pump energy + 2 battery energy (charge + discharge) = 3
-        assert energy_count == 3
+        # 17 base system + 7 battery (now system-level) = 24
+        assert system_count == 24
+        # 8 base energy + 2 battery energy (charge + discharge) = 10
+        assert system_energy_count == 10
+        # Only the heat pump is appliance-level now
+        assert appliance_count == 2
+        # Only the heat pump has an appliance energy accumulator
+        assert energy_count == 1
+
+        # Battery entities are keyed by system_id, not applianceID
+        battery_uids = {
+            e._attr_unique_id
+            for e in entities
+            if "battery" in (e._attr_unique_id or "")
+        }
+        assert "system-1_battery_state_of_charge" in battery_uids
+        assert "system-1_battery_charge_energy" in battery_uids
+        assert not any("bat-1" in uid for uid in battery_uids)
 
 
 # ---------------------------------------------------------------------------

@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-30
+
+### Changed
+
+- **Battery sensors are now system-level, stable across gridX applianceID changes.**
+  State of charge, power, charge, discharge, remaining/usable/nominal capacity and
+  the charge/discharge energy accumulators now read the system-level aggregate
+  `battery` object and are keyed by `system_id` instead of the per-appliance
+  `applianceID`. gridX reassigns the `applianceID` whenever it re-registers the
+  battery (firmware update, EEBUS re-pairing); each reassignment orphaned the old
+  entities as `unavailable` and spawned duplicates (`..._2`, `..._3`). For a
+  single-battery system the aggregate is identical, and the new entities survive the
+  ID churn. The obsolete per-appliance battery entities can be deleted from the
+  entity registry.
+
 ## [1.1.1] - 2026-06-16
 
 ### Added
