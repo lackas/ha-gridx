@@ -168,14 +168,6 @@ def _migrate_battery_entities(hass: HomeAssistant, entry: GridxConfigEntry) -> N
         if ent_reg.async_get_entity_id("sensor", DOMAIN, new_uid) is None:
             ent_reg.async_update_entity(entity_id, new_unique_id=new_uid)
 
-    # Remove gridX devices left empty by the cull (the dead battery devices).
-    dev_reg = dr.async_get(hass)
-    for device in dr.async_entries_for_config_entry(dev_reg, entry.entry_id):
-        if not er.async_entries_for_device(
-            ent_reg, device.id, include_disabled_entities=True
-        ):
-            dev_reg.async_remove_device(device.id)
-
     _LOGGER.info(
         "gridX battery migration: re-keyed %d entit%s to system-level, "
         "culled %d applianceID corpse%s",
@@ -184,6 +176,24 @@ def _migrate_battery_entities(hass: HomeAssistant, entry: GridxConfigEntry) -> N
         len(culls),
         "" if len(culls) == 1 else "s",
     )
+
+
+def _cull_empty_gridx_devices(hass: HomeAssistant, entry: GridxConfigEntry) -> None:
+    """Remove gridX devices that have no entities left.
+
+    Called after the sensor platform is set up. The migration re-keys a battery
+    entity to the system device, which leaves its old per-applianceID "gridX
+    Battery" device empty; the fully dead applianceID devices end up empty too.
+    HA does not auto-remove an empty device while it is still linked to a config
+    entry, so we prune them here.
+    """
+    ent_reg = er.async_get(hass)
+    dev_reg = dr.async_get(hass)
+    for device in dr.async_entries_for_config_entry(dev_reg, entry.entry_id):
+        if not er.async_entries_for_device(
+            ent_reg, device.id, include_disabled_entities=True
+        ):
+            dev_reg.async_remove_device(device.id)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: GridxConfigEntry) -> bool:
@@ -210,6 +220,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: GridxConfigEntry) -> boo
     # before the sensor platform creates the (new) system battery sensors.
     _migrate_battery_entities(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # After the platform created the system battery sensors (which moves the
+    # migrated entities onto the system device), prune any now-empty devices.
+    _cull_empty_gridx_devices(hass, entry)
     return True
 
 

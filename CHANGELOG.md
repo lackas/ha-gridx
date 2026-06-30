@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-06-30
+
+### Fixed
+
+- Prune empty gridX devices after setup. The 1.2.0 battery migration re-keys the
+  surviving battery entity onto the system device, which leaves its old
+  per-applianceID "gridX Battery" device with no entities. HA does not auto-remove
+  an empty device while it is still linked to a config entry, so the upgrade left a
+  stray empty device behind. It is now pruned after the sensor platform is set up.
+
 ## [1.2.0] - 2026-06-30
 
 ### Changed
