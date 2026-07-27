@@ -5,7 +5,7 @@ Its JavaScript bundle bakes in an Auth0 config block for every OEM that runs
 on gridX infrastructure (E.ON Home, IBC HomeOne, Octopus, LEW, …). Each block
 looks like:
 
-    {audience:"my.gridx",clientDomain:"https://gridx.eu.auth0.com",
+    {audience:"https://api.gridx.de",clientDomain:"https://gridx.eu.auth0.com",
      clientID:"…",realm:"…-authentication-db",
      tokenScope:"email openid offline_access"}
 
@@ -35,7 +35,7 @@ from pathlib import Path
 PORTAL_URL = "https://homeone.gridx.de/"
 BUNDLE_PATH_RE = re.compile(r'src="(/assets/index-[^"]+\.js)"')
 OEM_BLOCK_RE = re.compile(
-    r'\{audience:"my\.gridx",'
+    r'\{audience:"[^"]+",'
     r'clientDomain:"https://gridx\.eu\.auth0\.com",'
     r'clientID:"(?P<client_id>[A-Za-z0-9]+)",'
     r'realm:"(?P<realm>[a-z0-9-]+-authentication-db)",'
