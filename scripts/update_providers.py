@@ -68,6 +68,7 @@ KNOWN_LABELS: dict[str, str] = {
     "lew-authentication-db": "LEW (Lechwerke)",
     "octopus-authentication-db": "Octopus Energy",
     "pvgreen-authentication-db": "PV Green",
+    "sonnen-authentication-db": "sonnen",
     "swnor-authentication-db": "Stadtwerke Norderstedt",
     "upvolt-authentication-db": "upVolt",
     "viessmann-authentication-db": (

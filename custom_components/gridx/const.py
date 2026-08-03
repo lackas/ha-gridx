@@ -174,6 +174,12 @@ PROVIDERS: Final[dict[str, Provider]] = {
         client_id="dbWuzhZqII1x0yX3SzzfHxsKxhZ91qzO",
         realm="pvgreen-authentication-db",
     ),
+    "sonnen": Provider(
+        key="sonnen",
+        label="sonnen",
+        client_id="Bcb0YhU9AhMvgEijBH0cb4vwLU5FwJ3M",
+        realm="sonnen-authentication-db",
+    ),
     "swnor": Provider(
         key="swnor",
         label="Stadtwerke Norderstedt",
