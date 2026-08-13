@@ -84,6 +84,12 @@ PROVIDERS: Final[dict[str, Provider]] = {
         client_id="VsgghMKZYiSku5OUo6B5MenBf8XmTA8z",
         realm="efa-home-authentication-db",
     ),
+    "egs": Provider(
+        key="egs",
+        label="EGS",
+        client_id="sBH1ahx8Bm5pqPbg21UEaG01Wiul46Lu",
+        realm="egs-authentication-db",
+    ),
     "empavo": Provider(
         key="empavo",
         label="empavo",

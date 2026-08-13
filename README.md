@@ -6,9 +6,11 @@ Home Assistant integration for gridX-based energy management systems.
 
 The gridX platform powers energy managers sold under many white-label brands. This integration works with all of them — pick your portal in the config flow:
 
-**1KOMMA5°**, **EFA-Home**, **empavo**, **enviaM**, **E.ON FEH** (Netherlands), **E.ON Home Manager** (default), **EVM** (Energieversorgung Mittelrhein), **EWV** (Energie- und Wasser-Versorgung), **Giedorf**, **Greenblocks**, **Heimwatt**, **hemos**, **IBC HomeOne Hub** (IBC Solar), **KlarSolar**, **LEW** (Lechwerke), **Octopus Energy**, **PV Green**, **Stadtwerke Norderstedt**, **upVolt**, **Viessmann GridBox** (legacy — Viessmann realm shut down end of 2025), **Zero 1**.
+**1KOMMA5°**, **Bdl Next**, **EFA-Home**, **EGS**, **empavo**, **enviaM**, **E.ON FEH** (Netherlands), **E.ON Home Manager** (default), **EVM** (Energieversorgung Mittelrhein), **EWV** (Energie- und Wasser-Versorgung), **Giedorf**, **Greenblocks**, **Heimwatt**, **hemos**, **IBC HomeOne Hub** (IBC Solar), **KlarSolar**, **LEW** (Lechwerke), **Octopus Energy**, **PV Green**, **sonnen**, **Stadtwerke Norderstedt**, **upVolt**, **Viessmann GridBox** (legacy — Viessmann realm shut down end of 2025), **Zero 1**.
 
 All portals share the same `api.gridx.de` backend; only the Auth0 `client_id` / `realm` differs per OEM. New portals are auto-detected weekly by CI from the live gridX SPA bundle.
+
+Not supported: **thermondo smart** is built on the Solar Manager platform, not on gridX, so it cannot be used with this integration.
 
 ## Features
 

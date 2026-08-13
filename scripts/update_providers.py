@@ -53,6 +53,7 @@ EXCLUDED_REALMS = {
 KNOWN_LABELS: dict[str, str] = {
     "1komma5grad-authentication-db": "1KOMMA5°",
     "efa-home-authentication-db": "EFA-Home",
+    "egs-authentication-db": "EGS",
     "empavo-authentication-db": "empavo",
     "enviam-authentication-db": "enviaM",
     "eon-feh-nl-authentication-db": "E.ON FEH (NL)",
@@ -103,17 +104,7 @@ def _fetch(url: str) -> str:
         return resp.read().decode("utf-8", errors="replace")
 
 
-def fetch_oem_blocks() -> list[OemBlock]:
-    html = _fetch(PORTAL_URL)
-    match = BUNDLE_PATH_RE.search(html)
-    if not match:
-        raise RuntimeError(
-            f"Could not find SPA bundle <script src> in {PORTAL_URL}; "
-            "the portal may have changed its build layout."
-        )
-    bundle_url = PORTAL_URL.rstrip("/") + match.group(1)
-    bundle = _fetch(bundle_url)
-
+def parse_oem_blocks(bundle: str, source: str = "the bundle") -> list[OemBlock]:
     seen: dict[str, OemBlock] = {}
     for m in OEM_BLOCK_RE.finditer(bundle):
         realm = m.group("realm")
@@ -124,10 +115,22 @@ def fetch_oem_blocks() -> list[OemBlock]:
 
     if not seen:
         raise RuntimeError(
-            f"Parsed {len(bundle):,} bytes from {bundle_url} but found no Auth0 "
+            f"Parsed {len(bundle):,} bytes from {source} but found no Auth0 "
             "OEM blocks. The bundle structure likely changed."
         )
     return sorted(seen.values(), key=lambda b: b.key)
+
+
+def fetch_oem_blocks() -> list[OemBlock]:
+    html = _fetch(PORTAL_URL)
+    match = BUNDLE_PATH_RE.search(html)
+    if not match:
+        raise RuntimeError(
+            f"Could not find SPA bundle <script src> in {PORTAL_URL}; "
+            "the portal may have changed its build layout."
+        )
+    bundle_url = PORTAL_URL.rstrip("/") + match.group(1)
+    return parse_oem_blocks(_fetch(bundle_url), bundle_url)
 
 
 def render_providers_block(blocks: list[OemBlock]) -> str:
