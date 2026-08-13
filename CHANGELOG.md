@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-08-13
+
 ### Added
 
 - Two new gridX portals: **sonnen** and **EGS**. Pick them in the config flow
