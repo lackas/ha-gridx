@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
       - run: pip install ruff
       - run: ruff check custom_components/ tests/
       - run: ruff format --check custom_components/ tests/
@@ -24,6 +24,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
       - run: pip install homeassistant pytest pytest-asyncio pytest-timeout aiohttp aioresponses
+      # Versions are unpinned, so record what was resolved. A stale Python here
+      # silently pulls an ancient Home Assistant and the run stops being meaningful.
+      - run: pip list | grep -E "^(homeassistant|aiohttp|aioresponses) "
       - run: pytest tests/components/gridx/ -v --timeout=30
