@@ -24,6 +24,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -562,10 +563,8 @@ class GridxApplianceSensor(CoordinatorEntity[GridxCoordinator], SensorEntity):
 
     @property
     def device_info(self) -> DeviceInfo:
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._appliance_id)},
-            name=self._device_name,
-            via_device=(DOMAIN, self._system_id),
+        return _appliance_device_info(
+            self, self._appliance_id, self._device_name, self._system_id
         )
 
 
@@ -702,10 +701,8 @@ class GridxApplianceEnergySensor(CoordinatorEntity[GridxCoordinator], RestoreSen
 
     @property
     def device_info(self) -> DeviceInfo:
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._lookup_appliance_id)},
-            name=self._device_name,
-            via_device=(DOMAIN, self._system_id),
+        return _appliance_device_info(
+            self, self._lookup_appliance_id, self._device_name, self._system_id
         )
 
 
@@ -802,6 +799,32 @@ _APPLIANCE_CONFIG: list[tuple[str, str, tuple, str]] = [
     ),
     ("heaters", "gridX Heater", HEATER_SENSOR_DESCRIPTIONS, "heaters"),
 ]
+
+
+def _appliance_device_info(
+    entity: CoordinatorEntity,
+    appliance_id: str,
+    device_name: str,
+    system_id: str,
+) -> DeviceInfo:
+    """Build appliance device info linked to its gridX system.
+
+    The system device is registered in async_setup_entry, so the lookup here
+    always finds it. If it ever does not, the appliance stays unlinked rather
+    than aborting setup.
+    """
+    device_info = DeviceInfo(
+        identifiers={(DOMAIN, appliance_id)},
+        name=device_name,
+    )
+    config_entry = entity.platform.config_entry
+    assert config_entry is not None
+    system_device = dr.async_get(entity.hass).async_get_device_by_identifier(
+        (DOMAIN, system_id), config_entry.entry_id
+    )
+    if system_device is not None:
+        device_info["via_device_id"] = system_device.id
+    return device_info
 
 
 def _build_entities(coordinator: GridxCoordinator) -> list:
@@ -929,7 +952,29 @@ async def async_setup_entry(
     historical_coordinator: GridxHistoricalCoordinator = entry.runtime_data[
         COORDINATOR_HISTORICAL
     ]
+    _async_register_system_devices(hass, entry, live_coordinator)
+
     async_add_entities(
         _build_entities(live_coordinator)
         + _build_historical_entities(historical_coordinator, entry.data["system_ids"])
     )
+
+
+@callback
+def _async_register_system_devices(
+    hass: HomeAssistant, entry: ConfigEntry, coordinator: GridxCoordinator
+) -> None:
+    """Register the system devices before appliances link to them.
+
+    An appliance references its system through via_device_id, which requires the
+    system device to exist in the registry by the time the appliance is added.
+    """
+    device_registry = dr.async_get(hass)
+    for system_id in coordinator.data:
+        device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={(DOMAIN, system_id)},
+            name="gridX",
+            manufacturer="gridX",
+            model="Gateway",
+        )

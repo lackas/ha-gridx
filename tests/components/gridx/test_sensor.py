@@ -775,11 +775,44 @@ class TestApplianceEnergySensorAccumulation:
         ]
         assert len(heater_energy) == 1
 
-    def test_device_info_via_device(self):
+    def test_device_info_via_device_id(self):
+        """The appliance links to its system by the system's registry id."""
+        from unittest.mock import MagicMock, patch
+
         sensor = self._make_sensor()
-        info = sensor.device_info
+        sensor.platform = MagicMock()
+        sensor.platform.config_entry.entry_id = "entry-1"
+
+        registry = MagicMock()
+        registry.async_get_device_by_identifier.return_value = MagicMock(id="dev-sys-1")
+        with patch(
+            "custom_components.gridx.sensor.dr.async_get", return_value=registry
+        ):
+            info = sensor.device_info
+
         assert ("gridx", "hp-1") in info["identifiers"]
-        assert info["via_device"] == ("gridx", "sys-1")
+        assert info["via_device_id"] == "dev-sys-1"
+        registry.async_get_device_by_identifier.assert_called_once_with(
+            ("gridx", "sys-1"), "entry-1"
+        )
+
+    def test_device_info_without_system_device(self):
+        """A missing system device leaves the appliance unlinked, not broken."""
+        from unittest.mock import MagicMock, patch
+
+        sensor = self._make_sensor()
+        sensor.platform = MagicMock()
+        sensor.platform.config_entry.entry_id = "entry-1"
+
+        registry = MagicMock()
+        registry.async_get_device_by_identifier.return_value = None
+        with patch(
+            "custom_components.gridx.sensor.dr.async_get", return_value=registry
+        ):
+            info = sensor.device_info
+
+        assert ("gridx", "hp-1") in info["identifiers"]
+        assert "via_device_id" not in info
 
     def test_unique_id(self):
         sensor = self._make_sensor()
