@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-09-07
+
+### Fixed
+
+- Appliances link to their gridX system through `via_device_id` instead of the
+  deprecated `via_device`, which stops working in Home Assistant 2027.8.0. The
+  replacement takes the parent's registry id, so the system device is now
+  registered during setup before the appliances that reference it.
+
 ## [1.3.0] - 2026-08-13
 
 ### Added
