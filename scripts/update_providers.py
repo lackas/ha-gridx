@@ -52,6 +52,7 @@ EXCLUDED_REALMS = {
 # a real human-readable name for a new OEM.
 KNOWN_LABELS: dict[str, str] = {
     "1komma5grad-authentication-db": "1KOMMA5°",
+    "bos-authentication-db": "gridX Dashboard",
     "efa-home-authentication-db": "EFA-Home",
     "egs-authentication-db": "EGS",
     "empavo-authentication-db": "empavo",
@@ -60,6 +61,7 @@ KNOWN_LABELS: dict[str, str] = {
     "eon-home-authentication-db": "E.ON Home Manager",
     "evm-authentication-db": "EVM",
     "ewv-authentication-db": "EWV",
+    "futura-link-authentication-db": "FuturaLink",
     "giedorf-authentication-db": "Giedorf",
     "greenblocks-authentication-db": "Greenblocks",
     "heimwatt-authentication-db": "Heimwatt",

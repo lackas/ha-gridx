@@ -78,6 +78,12 @@ PROVIDERS: Final[dict[str, Provider]] = {
         client_id="xVDQkuyCK9gRm4Di1uNAwpWjKLehUu1u",
         realm="bdl-next-authentication-db",
     ),
+    "bos": Provider(
+        key="bos",
+        label="gridX Dashboard",
+        client_id="dl2x2kSt8dkAgC1DnHLcX2QAnYqgVZN0",
+        realm="bos-authentication-db",
+    ),
     "efa_home": Provider(
         key="efa_home",
         label="EFA-Home",
@@ -125,6 +131,12 @@ PROVIDERS: Final[dict[str, Provider]] = {
         label="EWV",
         client_id="0IYvvxIwlP4OxPF9PLwjZCem5U1yibgn",
         realm="ewv-authentication-db",
+    ),
+    "futura_link": Provider(
+        key="futura_link",
+        label="FuturaLink",
+        client_id="oE6fHuMPXa0IBlYz15RTs1ZvLw6WUHM0",
+        realm="futura-link-authentication-db",
     ),
     "giedorf": Provider(
         key="giedorf",
