@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-09-28
+
+### Fixed
+
+- The grid export meter showed a negative value on systems whose API reports
+  it with a negative sign, so Home Assistant rejected it for long-term
+  statistics.
+
 ## [1.4.0] - 2026-09-22
 
 ### Added

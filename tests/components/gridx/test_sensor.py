@@ -110,6 +110,24 @@ class TestSystemSensorValueExtraction:
             9000.0 / 3600
         )
 
+    def test_negative_export_meter_reading_is_positive(self):
+        """A negative export meter reading from the API yields a positive total."""
+        data = GridxSystemData(grid_meter_reading_negative=-38369519616.0)
+
+        (
+            SYSTEM_SENSOR_DESCRIPTIONS,
+            _,
+            _,
+            _,
+            _,
+        ) = _get_descriptions()
+
+        desc_map = {d.key: d for d in SYSTEM_SENSOR_DESCRIPTIONS}
+
+        assert desc_map["grid_meter_reading_negative"].value_fn(data) == pytest.approx(
+            10658199.893333
+        )
+
     def test_rate_sensors_multiply_by_100(self):
         """Rate sensors (0–1 floats) are multiplied by 100 before returning."""
         data = GridxSystemData(
