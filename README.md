@@ -18,6 +18,7 @@ Not supported: **thermondo smart** is built on the Solar Manager platform, not o
 - Automatic device creation for batteries, heat pumps, EV chargers, and heaters
 - Proper state_class metadata for HA Energy dashboard compatibility
 - SG Ready state monitoring for heat pumps
+- EV charge mode, target SoC and departure time control
 - Cumulative grid meter readings (import/export)
 - Exponential backoff on API errors (respects the API)
 
@@ -56,7 +57,7 @@ The integration creates devices based on your system:
 | gridX | 17 sensors (power flows, rates, meter readings) | Always |
 | gridX Battery | 7 sensors (SoC, power, charge/discharge, capacity) | If battery present |
 | gridX Heat Pump | 2 sensors (power, SG Ready state) | If heat pump present |
-| gridX EV Charger | 6 sensors (power, SoC, currents, total energy) | If EV charger present |
+| gridX EV Charger | 8 sensors (power, SoC, currents, total energy, plug and station state), charge mode select, minimum SoC and max charge power (disabled by default) numbers, departure time | If EV charger present |
 | gridX Heater | 2 sensors (power, temperature) | If heater present |
 
 Multiple appliances of the same type are supported (e.g., "gridX Battery" and "gridX Battery 2").

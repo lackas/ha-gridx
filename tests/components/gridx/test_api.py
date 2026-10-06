@@ -17,6 +17,8 @@ from custom_components.gridx.api import (
     GridxConnectionError,
 )
 from custom_components.gridx.const import (
+    API_EV_CONFIGURATION_URL,
+    API_EV_PROFILES_URL,
     API_GATEWAYS_URL,
     API_HISTORICAL_URL,
     API_LIVE_URL,
@@ -156,6 +158,134 @@ class TestGetGateways:
                 result = await api.async_get_gateways()
 
             assert result == ["system-id-001"]
+
+    @pytest.mark.asyncio
+    async def test_get_gateway_ids(self):
+        gateways_data = load_fixture("gateways.json")
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.get(API_GATEWAYS_URL, payload=gateways_data)
+                result = await api.async_get_gateway_ids()
+
+            assert result == {"system-id-001": "gateway-id-001"}
+
+
+class TestEVConfiguration:
+    URL = API_EV_CONFIGURATION_URL.format("gateway-id-001", "ev-001")
+
+    @pytest.mark.asyncio
+    async def test_get_ev_configuration(self):
+        config = load_fixture("ev_configuration.json")
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                # gridX answers with its vendor media type, not application/json
+                m.get(
+                    self.URL,
+                    body=json.dumps(config),
+                    content_type="application/vnd.gridx.v2+json",
+                )
+                result = await api.async_get_ev_configuration(
+                    "gateway-id-001", "ev-001"
+                )
+                request = m.requests[("GET", aiohttp.client.URL(self.URL))][0]
+
+            assert result["chargeMode"] == "SURPLUS_EV"
+            assert request.kwargs["headers"]["accept"] == (
+                "application/vnd.gridx.v2+json"
+            )
+            assert request.kwargs["headers"]["Authorization"] == "Bearer id-token-xyz"
+
+    @pytest.mark.asyncio
+    async def test_get_ev_configuration_invalid_payload(self):
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.get(self.URL, payload=[])
+                with pytest.raises(GridxApiError):
+                    await api.async_get_ev_configuration("gateway-id-001", "ev-001")
+
+    @pytest.mark.asyncio
+    async def test_patch_ev_configuration(self):
+        config = load_fixture("ev_configuration.json") | {"chargeMode": "FORCED_EV"}
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.patch(self.URL, payload=config)
+                result = await api.async_patch_ev_configuration(
+                    "gateway-id-001", "ev-001", {"chargeMode": "FORCED_EV"}
+                )
+                request = m.requests[("PATCH", aiohttp.client.URL(self.URL))][0]
+
+            assert result["chargeMode"] == "FORCED_EV"
+            assert request.kwargs["json"] == {"chargeMode": "FORCED_EV"}
+            assert request.kwargs["headers"]["accept"] == (
+                "application/vnd.gridx.v2+json"
+            )
+
+    @pytest.mark.asyncio
+    async def test_patch_ev_configuration_401_reauths_and_retries(self):
+        config = load_fixture("ev_configuration.json")
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.patch(self.URL, status=401)
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.patch(self.URL, payload=config)
+                result = await api.async_patch_ev_configuration(
+                    "gateway-id-001", "ev-001", {"chargeMode": "SURPLUS_EV"}
+                )
+                requests = m.requests[("PATCH", aiohttp.client.URL(self.URL))]
+
+            assert result["chargeMode"] == "SURPLUS_EV"
+            assert [r.kwargs["json"] for r in requests] == [
+                {"chargeMode": "SURPLUS_EV"},
+                {"chargeMode": "SURPLUS_EV"},
+            ]
+
+    @pytest.mark.asyncio
+    async def test_patch_ev_configuration_bad_request(self):
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.patch(self.URL, status=400)
+                with pytest.raises(GridxApiError):
+                    await api.async_patch_ev_configuration(
+                        "gateway-id-001", "ev-001", {"chargeMode": "MIN_EV"}
+                    )
+
+    @pytest.mark.asyncio
+    async def test_get_ev_profiles(self):
+        profiles = load_fixture("ev_profiles.json")
+        url = API_EV_PROFILES_URL.format("system-id-001")
+
+        async with aiohttp.ClientSession() as session:
+            api = GridxApi(session, "user@example.com", "secret")
+
+            with aioresponses() as m:
+                m.post(AUTH0_TOKEN_URL, payload=TOKEN_RESPONSE)
+                m.get(url, payload=profiles)
+                result = await api.async_get_ev_profiles("system-id-001")
+
+            assert result[0]["capacity"] == 79000
+            assert result[0]["chargingStationApplianceIDs"] == ["ev-001"]
 
 
 class TestGetLiveData:

@@ -23,7 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 
 type GridxConfigEntry = ConfigEntry[dict]
 
-PLATFORMS = ["sensor"]
+PLATFORMS = ["number", "select", "sensor", "time"]
 
 
 # ---------------------------------------------------------------------------
@@ -196,6 +196,25 @@ def _cull_empty_gridx_devices(hass: HomeAssistant, entry: GridxConfigEntry) -> N
             dev_reg.async_remove_device(device.id)
 
 
+def _register_system_devices(hass: HomeAssistant, entry: GridxConfigEntry) -> None:
+    """Register the system devices before appliances link to them.
+
+    An appliance references its system through via_device_id, which requires the
+    system device to exist in the registry by the time the appliance is added.
+    The platforms are set up concurrently, so this cannot live in one of them.
+    """
+    coordinator: GridxCoordinator = entry.runtime_data[COORDINATOR_LIVE]
+    device_registry = dr.async_get(hass)
+    for system_id in coordinator.data:
+        device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={(DOMAIN, system_id)},
+            name="gridX",
+            manufacturer="gridX",
+            model="Gateway",
+        )
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: GridxConfigEntry) -> bool:
     """Set up gridX from a config entry."""
     api = GridxApi(
@@ -219,6 +238,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GridxConfigEntry) -> boo
     # Migrate appliance-keyed battery entities to stable system-level keys
     # before the sensor platform creates the (new) system battery sensors.
     _migrate_battery_entities(hass, entry)
+    _register_system_devices(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     # After the platform created the system battery sensors (which moves the
     # migrated entities onto the system device), prune any now-empty devices.

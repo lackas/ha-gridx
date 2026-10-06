@@ -255,10 +255,31 @@ class TestEVChargerSensorValueExtraction:
             123.456
         )
 
-    def test_ev_charger_descriptions_count(self):
-        """There are exactly 6 EV charger sensor descriptions."""
+    def test_ev_charger_plug_and_station_state(self):
+        """Plug and station state pass through, empty strings become None."""
         (_, _, _, EV_CHARGER_SENSOR_DESCRIPTIONS, _) = _get_descriptions()
-        assert len(EV_CHARGER_SENSOR_DESCRIPTIONS) == 6
+        desc_map = {d.key: d for d in EV_CHARGER_SENSOR_DESCRIPTIONS}
+
+        ev = GridxEVChargingStation(
+            plug_state="PLUGGED_ON_STATION_AND_PLUGGED_ON_VEHICLE",
+            station_state="AUTHORIZATION_REJECTED",
+        )
+        assert desc_map["ev_charger_plug_state"].value_fn(ev) == (
+            "PLUGGED_ON_STATION_AND_PLUGGED_ON_VEHICLE"
+        )
+        assert (
+            desc_map["ev_charger_station_state"].value_fn(ev)
+            == "AUTHORIZATION_REJECTED"
+        )
+
+        empty = GridxEVChargingStation()
+        assert desc_map["ev_charger_plug_state"].value_fn(empty) is None
+        assert desc_map["ev_charger_station_state"].value_fn(empty) is None
+
+    def test_ev_charger_descriptions_count(self):
+        """There are exactly 8 EV charger sensor descriptions."""
+        (_, _, _, EV_CHARGER_SENSOR_DESCRIPTIONS, _) = _get_descriptions()
+        assert len(EV_CHARGER_SENSOR_DESCRIPTIONS) == 8
 
 
 # ---------------------------------------------------------------------------
@@ -804,7 +825,7 @@ class TestApplianceEnergySensorAccumulation:
         registry = MagicMock()
         registry.async_get_device_by_identifier.return_value = MagicMock(id="dev-sys-1")
         with patch(
-            "custom_components.gridx.sensor.dr.async_get", return_value=registry
+            "custom_components.gridx.entity.dr.async_get", return_value=registry
         ):
             info = sensor.device_info
 
@@ -825,7 +846,7 @@ class TestApplianceEnergySensorAccumulation:
         registry = MagicMock()
         registry.async_get_device_by_identifier.return_value = None
         with patch(
-            "custom_components.gridx.sensor.dr.async_get", return_value=registry
+            "custom_components.gridx.entity.dr.async_get", return_value=registry
         ):
             info = sensor.device_info
 

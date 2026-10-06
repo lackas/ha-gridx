@@ -281,3 +281,112 @@ async def test_historical_coordinator_auth_error():
         await coordinator._async_update_data()
 
     entry.async_start_reauth.assert_called_once_with(hass)
+
+
+# ---------------------------------------------------------------------------
+# EV configuration
+# ---------------------------------------------------------------------------
+
+
+def make_ev_api(config=None):
+    """Create a mock GridxApi for a system with one EV charging station."""
+    from custom_components.gridx.models import GridxEVChargingStation
+
+    api = make_api()
+    api.async_get_live_data = AsyncMock(
+        side_effect=lambda _: GridxSystemData(
+            ev_charging_stations=[GridxEVChargingStation(appliance_id="ev-001")]
+        )
+    )
+    api.async_get_gateway_ids = AsyncMock(
+        return_value={"system-id-001": "gateway-id-001"}
+    )
+    api.async_get_ev_configuration = AsyncMock(
+        return_value=config or {"chargeMode": "SURPLUS_EV"}
+    )
+    return api
+
+
+@pytest.mark.asyncio
+async def test_coordinator_fetches_ev_configuration():
+    """EV configurations are attached per station, gateway IDs resolved once."""
+    api = make_ev_api()
+    coordinator = GridxCoordinator(make_hass(), api, make_config_entry())
+
+    await coordinator._async_update_data()
+    result = await coordinator._async_update_data()
+
+    assert result["system-id-001"].ev_configurations == {
+        "ev-001": {"chargeMode": "SURPLUS_EV"}
+    }
+    api.async_get_gateway_ids.assert_awaited_once()
+    api.async_get_ev_configuration.assert_awaited_with("gateway-id-001", "ev-001")
+
+
+@pytest.mark.asyncio
+async def test_coordinator_skips_ev_configuration_without_stations():
+    """No EV station, no extra requests."""
+    api = make_api()
+    api.async_get_gateway_ids = AsyncMock()
+    coordinator = GridxCoordinator(make_hass(), api, make_config_entry())
+
+    await coordinator._async_update_data()
+
+    api.async_get_gateway_ids.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_coordinator_ev_configuration_failure_keeps_live_data():
+    """A failing EV configuration call leaves the config out, live data stays."""
+    api = make_ev_api()
+    api.async_get_ev_configuration = AsyncMock(
+        side_effect=GridxConnectionError("timeout")
+    )
+    coordinator = GridxCoordinator(make_hass(), api, make_config_entry())
+
+    result = await coordinator._async_update_data()
+
+    assert len(result["system-id-001"].ev_charging_stations) == 1
+    assert result["system-id-001"].ev_configurations == {}
+    assert coordinator._consecutive_errors == 0
+
+
+@pytest.mark.asyncio
+async def test_coordinator_set_ev_configuration_stores_response():
+    """The PATCH response replaces the stored configuration right away."""
+    api = make_ev_api()
+    api.async_patch_ev_configuration = AsyncMock(
+        return_value={"chargeMode": "FORCED_EV"}
+    )
+    coordinator = GridxCoordinator(make_hass(), api, make_config_entry())
+    coordinator.data = await coordinator._async_update_data()
+    listener = MagicMock()
+    coordinator._listeners[object()] = (listener, None)
+
+    await coordinator.async_set_ev_configuration(
+        "system-id-001", "ev-001", {"chargeMode": "FORCED_EV"}
+    )
+
+    api.async_patch_ev_configuration.assert_awaited_once_with(
+        "gateway-id-001", "ev-001", {"chargeMode": "FORCED_EV"}
+    )
+    assert coordinator.data["system-id-001"].ev_configurations["ev-001"] == {
+        "chargeMode": "FORCED_EV"
+    }
+    listener.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_coordinator_ev_capacity_from_profile():
+    """The EV profile linked to the station provides the capacity."""
+    api = make_ev_api()
+    api.async_get_ev_profiles = AsyncMock(
+        return_value=[
+            {"capacity": 50000, "chargingStationApplianceIDs": ["other"]},
+            {"capacity": 79000, "chargingStationApplianceIDs": ["ev-001"]},
+        ]
+    )
+    coordinator = GridxCoordinator(make_hass(), api, make_config_entry())
+
+    assert await coordinator.async_get_ev_capacity("system-id-001", "ev-001") == 79000
+    assert await coordinator.async_get_ev_capacity("system-id-001", "ev-x") is None

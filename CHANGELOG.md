@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- EV charger control: charge mode (quick charge, minimum SoC, departure time,
+  solar surplus), minimum SoC, departure time and an optional max charge power.
+- EV charger plug state and station state sensors.
+
 ## [1.4.1] - 2026-09-28
 
 ### Fixed

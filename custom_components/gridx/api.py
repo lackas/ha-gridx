@@ -11,9 +11,12 @@ from typing import Any
 import aiohttp
 
 from .const import (
+    API_EV_CONFIGURATION_URL,
+    API_EV_PROFILES_URL,
     API_GATEWAYS_URL,
     API_HISTORICAL_URL,
     API_LIVE_URL,
+    API_V2_ACCEPT,
     AUTH0_AUDIENCE,
     AUTH0_GRANT_TYPE,
     AUTH0_SCOPE,
@@ -249,14 +252,30 @@ class GridxApi:
                 self._last_auth_attempt = 0
                 await self.authenticate()
 
-    async def _get(self, url: str, *, _retried: bool = False) -> Any:
-        """Perform an authenticated GET request."""
+    async def _request(
+        self,
+        method: str,
+        url: str,
+        *,
+        json: Any = None,
+        accept: str | None = None,
+        _retried: bool = False,
+    ) -> Any:
+        """Perform an authenticated request and return the JSON body.
+
+        Only used for idempotent calls (GET, and PATCH with a fixed body), so
+        transient connection errors are retried.
+        """
         await self._ensure_token()
 
         headers = {"Authorization": f"Bearer {self._token['id_token']}"}
+        if accept is not None:
+            headers["accept"] = accept
 
         async def _do_request() -> Any:
-            async with self._session.get(url, headers=headers) as resp:
+            async with self._session.request(
+                method, url, headers=headers, json=json
+            ) as resp:
                 if resp.status in (401, 403):
                     # Surface as ClientResponseError so the outer except can
                     # decide whether to refresh the token and retry once.
@@ -264,17 +283,20 @@ class GridxApi:
                 if resp.status >= 500:
                     raise GridxApiError(f"Server error: HTTP {resp.status}")
                 resp.raise_for_status()
-                return await resp.json()
+                # v2 endpoints answer with a vendor media type
+                return await resp.json(content_type=None)
 
         try:
-            return await _retry_transient(_do_request, op_name="GET")
+            return await _retry_transient(_do_request, op_name=method)
         except GridxError:
             raise
         except aiohttp.ClientResponseError as err:
             if err.status in (401, 403):
                 if not _retried:
                     self._token = None
-                    return await self._get(url, _retried=True)
+                    return await self._request(
+                        method, url, json=json, accept=accept, _retried=True
+                    )
                 raise GridxAuthenticationError(
                     f"API request unauthorized: HTTP {err.status}"
                 ) from err
@@ -284,6 +306,14 @@ class GridxApi:
         except (TimeoutError, aiohttp.ClientError) as err:
             raise GridxConnectionError(f"Connection error: {err}") from err
 
+    async def _get(self, url: str, *, accept: str | None = None) -> Any:
+        """Perform an authenticated GET request."""
+        return await self._request("GET", url, accept=accept)
+
+    async def _patch(self, url: str, data: dict[str, Any]) -> Any:
+        """Perform an authenticated PATCH request with a JSON body."""
+        return await self._request("PATCH", url, json=data, accept=API_V2_ACCEPT)
+
     async def async_get_gateways(self) -> list[str]:
         """Return list of system IDs from the gateways endpoint."""
         data = await self._get(API_GATEWAYS_URL)
@@ -291,6 +321,41 @@ class GridxApi:
             return [str(entry["system"]["id"]) for entry in data]
         except (KeyError, TypeError, ValueError) as err:
             raise GridxApiError("Unexpected gateways payload") from err
+
+    async def async_get_gateway_ids(self) -> dict[str, str]:
+        """Return a mapping of system ID to gateway ID."""
+        data = await self._get(API_GATEWAYS_URL)
+        try:
+            return {str(entry["system"]["id"]): str(entry["id"]) for entry in data}
+        except (KeyError, TypeError, ValueError) as err:
+            raise GridxApiError("Unexpected gateways payload") from err
+
+    async def async_get_ev_configuration(
+        self, gateway_id: str, appliance_id: str
+    ) -> dict[str, Any]:
+        """Return the EV configuration of a charging station."""
+        url = API_EV_CONFIGURATION_URL.format(gateway_id, appliance_id)
+        data = await self._get(url, accept=API_V2_ACCEPT)
+        if not isinstance(data, dict):
+            raise GridxApiError("Unexpected EV configuration payload")
+        return data
+
+    async def async_patch_ev_configuration(
+        self, gateway_id: str, appliance_id: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Update the EV configuration and return the full new configuration."""
+        url = API_EV_CONFIGURATION_URL.format(gateway_id, appliance_id)
+        result = await self._patch(url, data)
+        if not isinstance(result, dict):
+            raise GridxApiError("Unexpected EV configuration payload")
+        return result
+
+    async def async_get_ev_profiles(self, system_id: str) -> list[dict[str, Any]]:
+        """Return the EV profiles of a system."""
+        data = await self._get(API_EV_PROFILES_URL.format(system_id))
+        if not isinstance(data, list):
+            raise GridxApiError("Unexpected EV profiles payload")
+        return [profile for profile in data if isinstance(profile, dict)]
 
     async def async_get_live_data(self, system_id: str) -> GridxSystemData:
         """Return parsed live data for the given system ID."""

@@ -16,6 +16,12 @@ API_BASE_URL: Final = "https://api.gridx.de"
 API_GATEWAYS_URL: Final = f"{API_BASE_URL}/gateways"
 API_LIVE_URL: Final = f"{API_BASE_URL}/systems/{{}}/live"
 API_HISTORICAL_URL: Final = f"{API_BASE_URL}/systems/{{}}/historical"
+API_EV_CONFIGURATION_URL: Final = (
+    f"{API_BASE_URL}/gateways/{{}}/appliances/{{}}/ev/configuration"
+)
+API_EV_PROFILES_URL: Final = f"{API_BASE_URL}/systems/{{}}/ev-profiles"
+# The EV configuration endpoints are documented with the v2 media type
+API_V2_ACCEPT: Final = "application/vnd.gridx.v2+json"
 
 # Polling
 DEFAULT_SCAN_INTERVAL: Final = 60
@@ -40,6 +46,16 @@ COORDINATOR_HISTORICAL: Final = "historical_coordinator"
 
 # SG Ready states (from gridX OpenAPI spec)
 SG_READY_STATES: Final = ["UNKNOWN", "OFF", "AUTO", "RECOMMEND_ON", "ON"]
+
+# EV charge modes: HA option -> gridX chargeMode
+EV_CHARGE_MODES: Final = {
+    "forced": "FORCED_EV",
+    "min": "MIN_EV",
+    "departure_time": "DEPARTURE_TIME_EV",
+    "surplus": "SURPLUS_EV",
+}
+EV_DEFAULT_MIN_SOC: Final = 80
+EV_DEFAULT_DEPARTURE_HOUR: Final = 7
 
 # Config entry keys
 CONF_PROVIDER: Final = "provider"

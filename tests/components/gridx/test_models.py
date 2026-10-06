@@ -189,3 +189,25 @@ class TestParseInvalidFields:
         assert result.ev_charging_stations[0].current_l1 == pytest.approx(0.0)
         assert len(result.heaters) == 1
         assert result.heaters[0].temperature == pytest.approx(0.0)
+
+
+class TestParseEVStationState:
+    def test_plug_and_station_state(self):
+        data = {
+            "evChargingStations": [
+                {
+                    "applianceID": "ev-1",
+                    "plugState": "PLUGGED_ON_STATION_AND_PLUGGED_ON_VEHICLE",
+                    "stationState": "AUTHORIZATION_REJECTED",
+                },
+                {"applianceID": "ev-2"},
+            ]
+        }
+
+        result = parse_live_data(data)
+
+        first, second = result.ev_charging_stations
+        assert first.plug_state == "PLUGGED_ON_STATION_AND_PLUGGED_ON_VEHICLE"
+        assert first.station_state == "AUTHORIZATION_REJECTED"
+        assert second.plug_state == ""
+        assert second.station_state == ""

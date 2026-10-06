@@ -1,8 +1,18 @@
 {
   "entity": {
+    "select": {
+      "ev_charge_mode": {
+        "default": "mdi:ev-station"
+      }
+    },
     "sensor": {
       "sg_ready_state": {
         "default": "mdi:heat-pump"
+      }
+    },
+    "time": {
+      "ev_departure_time": {
+        "default": "mdi:clock-end"
       }
     }
   }

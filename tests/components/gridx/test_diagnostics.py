@@ -30,6 +30,7 @@ def mock_system_data():
         heat_pumps=[GridxHeatPump(appliance_id="hp1", power=800.0)],
         ev_charging_stations=[GridxEVChargingStation(appliance_id="ev1", power=7400.0)],
         heaters=[GridxHeater(appliance_id="heater1", power=500.0)],
+        ev_configurations={"ev1": {"chargeMode": "SURPLUS_EV"}},
     )
 
 
@@ -92,6 +93,7 @@ async def test_diagnostics_appliance_counts(mock_hass, mock_entry):
     assert system_data["heat_pumps"] == 1
     assert system_data["ev_charging_stations"] == 1
     assert system_data["heaters"] == 1
+    assert system_data["ev_charge_modes"] == ["SURPLUS_EV"]
 
 
 @pytest.mark.asyncio

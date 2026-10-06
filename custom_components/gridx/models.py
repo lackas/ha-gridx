@@ -41,6 +41,8 @@ class GridxEVChargingStation:
     current_l2: float = 0.0
     current_l3: float = 0.0
     reading_total: float = 0.0
+    plug_state: str = ""
+    station_state: str = ""
 
 
 @dataclass
@@ -95,6 +97,10 @@ class GridxSystemData:
     heat_pumps: list[GridxHeatPump] = field(default_factory=list)
     ev_charging_stations: list[GridxEVChargingStation] = field(default_factory=list)
     heaters: list[GridxHeater] = field(default_factory=list)
+
+    # EV configuration per charging station applianceID, raw API payload.
+    # Filled by the coordinator, not part of /live.
+    ev_configurations: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 def _parse_datetime(value: str | None) -> datetime | None:
@@ -169,6 +175,8 @@ def _parse_ev_charging_station(raw: dict[str, Any]) -> GridxEVChargingStation:
         current_l2=_parse_float(raw.get("currentL2")),
         current_l3=_parse_float(raw.get("currentL3")),
         reading_total=_parse_float(raw.get("readingTotal")),
+        plug_state=_parse_string(raw.get("plugState")),
+        station_state=_parse_string(raw.get("stationState")),
     )
 
 

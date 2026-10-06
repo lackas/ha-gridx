@@ -1,0 +1,8 @@
+[
+  {
+    "id": "profile-001",
+    "name": "My EV",
+    "capacity": 79000,
+    "chargingStationApplianceIDs": ["ev-001"]
+  }
+]

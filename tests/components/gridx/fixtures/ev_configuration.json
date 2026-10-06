@@ -1,0 +1,17 @@
+{
+  "chargingEnabled": null,
+  "chargingRemoteControllable": null,
+  "lockEnabled": null,
+  "minRequestedSoc": null,
+  "departureTimestamp": null,
+  "userSoc": null,
+  "userTotalCapacity": null,
+  "chargeMode": "SURPLUS_EV",
+  "maxPowerCalculated": 10431,
+  "maxChargePower": null,
+  "minChargePower": null,
+  "evProfileID": "profile-001",
+  "applianceID": "ev-001",
+  "createdAt": "2026-05-12T09:14:03Z",
+  "updatedAt": "2026-10-06T08:01:44Z"
+}

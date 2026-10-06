@@ -27,6 +27,10 @@ async def async_get_config_entry_diagnostics(
                     "heat_pumps": len(data.heat_pumps),
                     "ev_charging_stations": len(data.ev_charging_stations),
                     "heaters": len(data.heaters),
+                    "ev_charge_modes": [
+                        config.get("chargeMode")
+                        for config in data.ev_configurations.values()
+                    ],
                 }
                 for system_id, data in coordinator.data.items()
             },
