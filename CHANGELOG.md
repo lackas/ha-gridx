@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-06
+
 ### Added
 
 - EV charger control: charge mode (quick charge, minimum SoC, departure time,
