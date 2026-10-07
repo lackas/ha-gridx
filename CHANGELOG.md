@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-10-07
+
+### Fixed
+
+- The EV charger meter reading showed Wh as kWh, 1000 times too high.
+
 ## [1.5.0] - 2026-10-06
 
 ### Added

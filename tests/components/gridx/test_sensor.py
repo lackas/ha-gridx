@@ -276,6 +276,17 @@ class TestEVChargerSensorValueExtraction:
         assert desc_map["ev_charger_plug_state"].value_fn(empty) is None
         assert desc_map["ev_charger_station_state"].value_fn(empty) is None
 
+    def test_ev_charger_reading_total_is_wh(self):
+        """readingTotal is Wh: 10673 while the wallbox's own meter read 10.673 kWh."""
+        (_, _, _, EV_CHARGER_SENSOR_DESCRIPTIONS, _) = _get_descriptions()
+        desc = {d.key: d for d in EV_CHARGER_SENSOR_DESCRIPTIONS}[
+            "ev_charger_reading_total"
+        ]
+        assert desc.native_unit_of_measurement == "Wh"
+        assert desc.value_fn(
+            GridxEVChargingStation(reading_total=10673.0)
+        ) == pytest.approx(10673.0)
+
     def test_ev_charger_descriptions_count(self):
         """There are exactly 8 EV charger sensor descriptions."""
         (_, _, _, EV_CHARGER_SENSOR_DESCRIPTIONS, _) = _get_descriptions()
