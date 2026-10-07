@@ -287,6 +287,14 @@ class TestEVChargerSensorValueExtraction:
             GridxEVChargingStation(reading_total=10673.0)
         ) == pytest.approx(10673.0)
 
+    def test_ev_charger_reading_total_ignores_wrapped_value(self):
+        """The wrapped value gridX sent on 2026-10-01 for one minute is dropped."""
+        (_, _, _, EV_CHARGER_SENSOR_DESCRIPTIONS, _) = _get_descriptions()
+        desc = {d.key: d for d in EV_CHARGER_SENSOR_DESCRIPTIONS}[
+            "ev_charger_reading_total"
+        ]
+        assert desc.value_fn(GridxEVChargingStation(reading_total=4294965296.0)) is None
+
     def test_ev_charger_descriptions_count(self):
         """There are exactly 8 EV charger sensor descriptions."""
         (_, _, _, EV_CHARGER_SENSOR_DESCRIPTIONS, _) = _get_descriptions()

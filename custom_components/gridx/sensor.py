@@ -433,7 +433,9 @@ EV_CHARGER_SENSOR_DESCRIPTIONS: tuple[GridxApplianceSensorDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=0,
-        value_fn=lambda ev: ev.reading_total,
+        # gridX briefly reports a wrapped uint32 (2**32 - 2000), which the
+        # recorder would count as a meter reset.
+        value_fn=lambda ev: ev.reading_total if ev.reading_total < 2**31 else None,
     ),
     GridxApplianceSensorDescription(
         key="ev_charger_plug_state",

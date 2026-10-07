@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-10-07
+
+### Fixed
+
+- A wrapped EV charger meter reading from gridX was counted as a meter reset
+  and added billions of kWh to the statistics. Such readings are now ignored.
+
 ## [1.5.1] - 2026-10-07
 
 ### Fixed
