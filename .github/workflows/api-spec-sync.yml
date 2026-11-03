@@ -1,0 +1,17 @@
+name: Solution API spec drift check
+
+on:
+  schedule:
+    - cron: "30 6 * * 1"  # Mondays at 06:30 UTC
+  workflow_dispatch:
+
+jobs:
+  check-spec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Run drift check
+        run: python scripts/update_api_spec.py --check
