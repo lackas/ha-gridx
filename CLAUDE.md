@@ -26,18 +26,23 @@ ha-gridx is a HACS-compatible Home Assistant integration for gridX-based energy 
 
 ### Running Tests
 
+Since 2026-11 the `ha` venv carries core's `pytest-home-assistant` plugin (installed editable
+from a core worktree), which autoloads and fails against the pip `homeassistant` in the venv.
+Disable it for this repo with `-p no:pytest_homeassistant`. The `hacs` venv fails differently
+(async fixtures without a handling plugin), so use `ha` with the flag.
+
 ```bash
 # All tests
-~/src/venv/ha/bin/python -m pytest tests/components/gridx/ -v
+~/src/venv/ha/bin/python -m pytest -p no:pytest_homeassistant tests/components/gridx/ -v
 
 # Single test file
-~/src/venv/ha/bin/python -m pytest tests/components/gridx/test_models.py -v
+~/src/venv/ha/bin/python -m pytest -p no:pytest_homeassistant tests/components/gridx/test_models.py -v
 
 # Single test
-~/src/venv/ha/bin/python -m pytest tests/components/gridx/test_models.py::TestParseFullResponse -v
+~/src/venv/ha/bin/python -m pytest -p no:pytest_homeassistant tests/components/gridx/test_models.py::TestParseFullResponse -v
 
 # With timeout (recommended)
-~/src/venv/ha/bin/python -m pytest tests/components/gridx/ -v -x --timeout=10
+~/src/venv/ha/bin/python -m pytest -p no:pytest_homeassistant tests/components/gridx/ -v -x --timeout=10
 ```
 
 Note: Use `~/src/venv/ha/bin/python -m pytest` (not bare `pytest`) to ensure the HA venv with all dependencies is used. The system Python does not have pytest or HA installed.
