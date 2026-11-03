@@ -1,0 +1,221 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "gridX Energiemanagement",
+        "description": "Wähle das Portal, bei dem du dich anmeldest (E.ON Home Manager, IBC HomeOne usw.), und gib die Zugangsdaten deines gridX-Kontos ein.",
+        "data": {
+          "provider": "Anbieter",
+          "email": "E-Mail",
+          "password": "Passwort"
+        }
+      },
+      "reauth_confirm": {
+        "title": "gridX erneut anmelden",
+        "description": "Deine gridX-Sitzung ist abgelaufen. Bitte gib dein Passwort erneut ein.",
+        "data": {
+          "password": "Passwort"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ungültige Zugangsdaten",
+      "cannot_connect": "Keine Verbindung zur gridX-API"
+    },
+    "abort": {
+      "already_configured": "Dieses Konto ist bereits eingerichtet",
+      "reauth_successful": "Erneute Anmeldung erfolgreich"
+    }
+  },
+  "entity": {
+    "number": {
+      "ev_max_charge_power": {
+        "name": "Maximale Ladeleistung"
+      },
+      "ev_min_requested_soc": {
+        "name": "Mindestladestand"
+      }
+    },
+    "select": {
+      "ev_charge_mode": {
+        "name": "Lademodus",
+        "state": {
+          "forced": "Schnellladen",
+          "min": "Laden bis Mindestladestand",
+          "departure_time": "Abfahrtszeit",
+          "surplus": "PV-Überschuss"
+        }
+      }
+    },
+    "sensor": {
+      "battery_capacity": {
+        "name": "Nutzbare Kapazität"
+      },
+      "battery_charge": {
+        "name": "Ladeleistung"
+      },
+      "battery_charge_energy": {
+        "name": "Ladeenergie"
+      },
+      "battery_discharge": {
+        "name": "Entladeleistung"
+      },
+      "battery_discharge_energy": {
+        "name": "Entladeenergie"
+      },
+      "battery_nominal_capacity": {
+        "name": "Nennkapazität"
+      },
+      "battery_power": {
+        "name": "Leistung"
+      },
+      "battery_remaining_charge": {
+        "name": "Restladung"
+      },
+      "battery_state_of_charge": {
+        "name": "Ladestand"
+      },
+      "consumption": {
+        "name": "Verbrauch"
+      },
+      "consumption_energy": {
+        "name": "Verbrauchsenergie"
+      },
+      "direct_consumption_ev": {
+        "name": "Direktverbrauch E-Auto"
+      },
+      "direct_consumption_heat_pump": {
+        "name": "Direktverbrauch Wärmepumpe"
+      },
+      "direct_consumption_heater": {
+        "name": "Direktverbrauch Heizstab"
+      },
+      "direct_consumption_household": {
+        "name": "Direktverbrauch Haushalt"
+      },
+      "direct_consumption_rate": {
+        "name": "Direktverbrauchsquote"
+      },
+      "ev_charger_current_l1": {
+        "name": "Strom L1"
+      },
+      "ev_charger_current_l2": {
+        "name": "Strom L2"
+      },
+      "ev_charger_current_l3": {
+        "name": "Strom L3"
+      },
+      "ev_charger_plug_state": {
+        "name": "Steckerstatus"
+      },
+      "ev_charger_power": {
+        "name": "Leistung"
+      },
+      "ev_charger_reading_total": {
+        "name": "Gesamtenergie"
+      },
+      "ev_charger_state_of_charge": {
+        "name": "Ladestand"
+      },
+      "ev_charger_station_state": {
+        "name": "Ladestationsstatus"
+      },
+      "grid": {
+        "name": "Netz"
+      },
+      "grid_export_energy": {
+        "name": "Netzeinspeisung"
+      },
+      "grid_import_energy": {
+        "name": "Netzbezug"
+      },
+      "grid_meter_reading_negative": {
+        "name": "Zählerstand Einspeisung"
+      },
+      "grid_meter_reading_positive": {
+        "name": "Zählerstand Bezug"
+      },
+      "heat_pump": {
+        "name": "Wärmepumpe"
+      },
+      "heat_pump_energy": {
+        "name": "Energie"
+      },
+      "heat_pump_power": {
+        "name": "Leistung"
+      },
+      "heat_pump_sg_ready_state": {
+        "name": "SG-Ready-Status",
+        "state": {
+          "unknown": "Unbekannt",
+          "off": "Aus",
+          "auto": "Automatik",
+          "recommend_on": "Einschaltempfehlung",
+          "on": "Ein"
+        }
+      },
+      "heater_energy": {
+        "name": "Energie"
+      },
+      "heater_power": {
+        "name": "Leistung"
+      },
+      "heater_temperature": {
+        "name": "Temperatur"
+      },
+      "hist_battery_charge": {
+        "name": "Batterieladung heute"
+      },
+      "hist_battery_discharge": {
+        "name": "Batterieentladung heute"
+      },
+      "hist_direct_consumption_heat_pump": {
+        "name": "Direktverbrauch Wärmepumpe heute"
+      },
+      "hist_heat_pump_energy": {
+        "name": "Wärmepumpenenergie heute"
+      },
+      "photovoltaic": {
+        "name": "Photovoltaik"
+      },
+      "photovoltaic_energy": {
+        "name": "Photovoltaikenergie"
+      },
+      "production": {
+        "name": "Erzeugung"
+      },
+      "production_energy": {
+        "name": "Erzeugte Energie"
+      },
+      "self_consumption": {
+        "name": "Eigenverbrauch"
+      },
+      "self_consumption_energy": {
+        "name": "Eigenverbrauchsenergie"
+      },
+      "self_consumption_rate": {
+        "name": "Eigenverbrauchsquote"
+      },
+      "self_sufficiency_rate": {
+        "name": "Autarkiegrad"
+      },
+      "self_supply": {
+        "name": "Eigenversorgung"
+      },
+      "self_supply_energy": {
+        "name": "Eigenversorgungsenergie"
+      },
+      "total_consumption": {
+        "name": "Gesamtverbrauch"
+      },
+      "total_consumption_energy": {
+        "name": "Gesamtverbrauchsenergie"
+      }
+    },
+    "time": {
+      "ev_departure_time": {
+        "name": "Abfahrtszeit"
+      }
+    }
+  }
+}

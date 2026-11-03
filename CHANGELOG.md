@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- German translation.
+
+### Changed
+
+- Tokens are requested for the audience `https://api.gridx.de`, as the gridX
+  web app does, and API calls send the access token instead of the ID token.
+
 ## [1.5.2] - 2026-10-07
 
 ### Fixed
