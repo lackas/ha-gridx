@@ -201,7 +201,7 @@ class TestEVConfiguration:
             assert request.kwargs["headers"]["accept"] == (
                 "application/vnd.gridx.v2+json"
             )
-            assert request.kwargs["headers"]["Authorization"] == "Bearer id-token-xyz"
+            assert request.kwargs["headers"]["Authorization"] == "Bearer access-abc"
 
     @pytest.mark.asyncio
     async def test_get_ev_configuration_invalid_payload(self):

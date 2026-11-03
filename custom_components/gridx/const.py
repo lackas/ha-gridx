@@ -7,7 +7,9 @@ DOMAIN: Final = "gridx"
 
 # Auth0 — shared across every gridX OEM
 AUTH0_TOKEN_URL: Final = "https://gridx.eu.auth0.com/oauth/token"
-AUTH0_AUDIENCE: Final = "my.gridx"
+# The audience the gridX web app requests since mid-2026; the old "my.gridx"
+# still works but is no longer what the backend is built for.
+AUTH0_AUDIENCE: Final = "https://api.gridx.de"
 AUTH0_SCOPE: Final = "email openid offline_access"
 AUTH0_GRANT_TYPE: Final = "http://auth0.com/oauth/grant-type/password-realm"
 

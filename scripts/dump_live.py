@@ -54,8 +54,8 @@ async def main():
                 return
             token_data = await resp.json()
 
-        id_token = token_data["id_token"]
-        headers = {"Authorization": f"Bearer {id_token}"}
+        token = token_data.get("access_token") or token_data["id_token"]
+        headers = {"Authorization": f"Bearer {token}"}
 
         # Dump gateways
         async with session.get(API_GATEWAYS_URL, headers=headers) as resp:

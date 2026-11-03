@@ -268,7 +268,10 @@ class GridxApi:
         """
         await self._ensure_token()
 
-        headers = {"Authorization": f"Bearer {self._token['id_token']}"}
+        # The access token is what the API audience is issued for; the ID token
+        # is only kept as a fallback for token responses without one.
+        token = self._token.get("access_token") or self._token["id_token"]
+        headers = {"Authorization": f"Bearer {token}"}
         if accept is not None:
             headers["accept"] = accept
 
