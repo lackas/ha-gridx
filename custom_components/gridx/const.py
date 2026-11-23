@@ -198,6 +198,12 @@ PROVIDERS: Final[dict[str, Provider]] = {
         client_id="4FDgJwNbBxwWBzvQHXjQqOsum8R7cKVR",
         realm="lew-authentication-db",
     ),
+    "naturstrom": Provider(
+        key="naturstrom",
+        label="Naturstrom",
+        client_id="mPoxNCCM4npinvzafQO9gUK3KBG72ukC",
+        realm="naturstrom-authentication-db",
+    ),
     "octopus": Provider(
         key="octopus",
         label="Octopus Energy",
